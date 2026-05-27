@@ -25,6 +25,8 @@ BOM(CSV/Excel) 로드 → 파트 트리 자동 구성
     ↓
 파트 트리 클릭 → 3D 하이라이트 / Ghost / Isolate
     ↓
+어노테이션 핀 배치 → 레이블 편집
+    ↓
 스크린샷 저장 / 쇼잉 진행
 ```
 
@@ -56,16 +58,15 @@ ShowDesk/
 │   ├── main/               ← Electron 메인 프로세스
 │   ├── preload/            ← Electron preload 스크립트
 │   ├── renderer/           ← React UI
-│   │   ├── components/     ← 공통 UI 컴포넌트
-│   │   ├── pages/          ← 페이지 컴포넌트
-│   │   ├── store/          ← Zustand 전역 상태
-│   │   └── hooks/          ← 커스텀 React Hooks
+│   │   ├── components/     ← LandingScreen, Viewer3D, PartTree, PartInfoPanel, PinEditor
+│   │   ├── pages/          ← (예약 — 현재 미사용)
+│   │   ├── store/          ← useAppStore.ts (Zustand)
+│   │   └── hooks/          ← (예약 — 현재 미사용)
 │   ├── core/               ← 핵심 비즈니스 로직
 │   │   ├── loader/         ← STL 파서
-│   │   ├── renderer/       ← Three.js 씬 관리
-│   │   ├── bom/            ← BOM 파싱 및 매핑
-│   │   └── annotation/     ← 어노테이션 (Phase 2)
-│   └── utils/
+│   │   ├── renderer/       ← Three.js 씬 관리 (SceneManager)
+│   │   ├── bom/            ← BOM 파싱, 매핑, 프로젝트 직렬화, AnnotationPin 타입
+│   │   └── annotation/     ← (예약 — 현재 미사용)
 │
 ├── assets/
 │   ├── icons/
@@ -107,6 +108,21 @@ npm test
 
 ---
 
+## IPC 채널 (main ↔ renderer)
+
+| 채널 | 설명 | 반환 |
+|------|------|------|
+| `dialog:openFile` | 파일 열기 다이얼로그 | `string \| null` |
+| `dialog:saveFile` | 파일 저장 다이얼로그 | `string \| null` |
+| `dialog:openDirectory` | 폴더 선택 다이얼로그 | `string \| null` |
+| `fs:readFile` | 파일 읽기 | `ArrayBuffer` |
+| `fs:writeFile` | 파일 쓰기 (`string \| ArrayBuffer`) | `void` |
+| `fs:readDir` | 폴더 목록 | `{ name, fullPath }[]` |
+
+`src/preload/index.ts`가 `window.api.*`로 노출. renderer에서 `ipcRenderer` 직접 사용 금지.
+
+---
+
 ## 커밋 컨벤션
 
 | 접두사 | 용도 |
@@ -118,6 +134,7 @@ npm test
 | `design:` | UI/디자인 변경 |
 | `3d:` | 3D 렌더러/뷰어 변경 |
 | `bom:` | BOM 파싱/매핑 변경 |
+| `ann:` | 어노테이션 핀 관련 |
 
 ---
 
@@ -134,6 +151,19 @@ npm test
 ### Three.js 씬
 - 오브젝트 이름(`.name`)이 BOM 매핑 키 — STL 로드 시 파일명을 오브젝트명으로 설정
 - 다중 STL 로드 시 씬에 누적되므로 clear 로직 명확히 관리
+
+### CSS2DRenderer (핀 레이블)
+- `SceneManager` 생성자가 `(canvas, container: HTMLElement)` 2인자 필요 — container에 labelRenderer DOM 삽입
+- labelRenderer는 `position:absolute`, `pointerEvents:none`으로 canvas 위에 중첩
+- `AnnotationPin` 타입은 `src/core/bom/project.ts`에 정의 (store가 re-export)
+
+### Wireframe 모드
+- 후면 와이어 표시: `mat.colorWrite = false; mat.depthWrite = false` — shadowMap은 정상 작동
+- 곡면 엣지: `EdgesGeometry(geo, 5°)` — threshold 20°로는 실린더 심 미검출
+
+### Ghost 모드 밝기 변동
+- 대형 반투명 메시가 shadow map에 기여하면 scene 밝기가 오브젝트 크기에 따라 변동
+- 해결: ghost 메시는 `mesh.castShadow = false`, 선택/불투명 메시만 `castShadow = true`
 
 ---
 
