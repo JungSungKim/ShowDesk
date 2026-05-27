@@ -18,11 +18,11 @@ function findNode(nodes: BOMNode[], partNumber: string): BOMNode | null {
 
 const KNOWN_FIELDS = new Set(['part_number', 'part_name', 'partNumber', 'partName', 'quantity', 'qty', 'material', 'description', 'desc', 'parent_part', 'parentPart'])
 
-function Row({ label, value }: { label: string; value: string }): React.JSX.Element {
+function StatRow({ label, value, accent }: { label: string; value: string; accent?: boolean }): React.JSX.Element {
   return (
-    <div className="info-row">
-      <span className="info-label">{label}</span>
-      <span className="info-value">{value}</span>
+    <div className="stat-row">
+      <span className="stat-label">{label}</span>
+      <span className={`stat-value${accent ? ' accent' : ''}`}>{value}</span>
     </div>
   )
 }
@@ -32,47 +32,49 @@ function PartInfoPanel({ tree, selectedPartNumber, isAssigned }: PartInfoPanelPr
 
   if (!node) {
     return (
-      <aside className="info-panel">
-        <div className="info-panel-header">Part Info</div>
-        <div className="info-panel-empty">
-          <p>Select a part to view details</p>
+      <aside className="hud-panel hud-right hud-status">
+        <div className="status-idle">
+          <div className="status-idle-icon">◈</div>
+          <div className="status-idle-text">파트를 선택하세요</div>
         </div>
       </aside>
     )
   }
 
-  // raw에서 알려진 필드 제외한 커스텀 컬럼만 추출
   const customRows = Object.entries(node.raw).filter(
     ([k]) => !KNOWN_FIELDS.has(k) && !KNOWN_FIELDS.has(k.toLowerCase().replace(/[\s_]/g, ''))
   )
 
   return (
-    <aside className="info-panel">
-      <div className="info-panel-header">
-        <span>Part Info</span>
-        <span className={`info-status ${isAssigned ? 'linked' : 'unlinked'}`}>
-          {isAssigned ? '● Linked' : '○ No STL'}
-        </span>
+    <aside className="hud-panel hud-right hud-status">
+      {/* 상단 배지 바 */}
+      <div className={`status-badge-bar ${isAssigned ? 'linked' : 'unlinked'}`}>
+        <span className="status-badge-dot">{isAssigned ? '●' : '○'}</span>
+        <span className="status-badge-text">{isAssigned ? 'STL Linked' : 'No STL'}</span>
+        {node.children.length > 0 && (
+          <span className="status-badge-sub">{node.children.length} sub-parts</span>
+        )}
       </div>
 
-      <div className="info-panel-body">
-        <Row label="Part No." value={node.partNumber} />
-        <Row label="Name"     value={node.partName} />
-        <Row label="Quantity" value={String(node.quantity)} />
-        {node.material    && <Row label="Material"    value={node.material} />}
-        {node.description && <Row label="Description" value={node.description} />}
+      {/* 파트 번호 + 이름 헤더 */}
+      <div className="status-header">
+        <div className="status-part-number">{node.partNumber}</div>
+        <div className="status-part-name">{node.partName}</div>
+      </div>
+
+      {/* 스탯 그리드 */}
+      <div className="status-body">
+        <StatRow label="QTY" value={String(node.quantity)} accent />
+        {node.material    && <StatRow label="MATERIAL"    value={node.material} />}
+        {node.description && <StatRow label="DESCRIPTION" value={node.description} />}
 
         {customRows.length > 0 && (
           <>
-            <div className="info-divider" />
-            {customRows.map(([k, v]) => v ? <Row key={k} label={k} value={v} /> : null)}
-          </>
-        )}
-
-        {node.children.length > 0 && (
-          <>
-            <div className="info-divider" />
-            <Row label="Sub-parts" value={String(node.children.length)} />
+            <div className="status-divider" />
+            {customRows.map(([k, v]) => v
+              ? <StatRow key={k} label={k.toUpperCase()} value={v} />
+              : null
+            )}
           </>
         )}
       </div>

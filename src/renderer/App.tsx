@@ -159,20 +159,31 @@ function App(): React.JSX.Element {
   return (
     <div className="app-layout">
       {toolbar}
-      <div className="workspace">
+      <div className="viewer-area">
 
-        {/* 왼쪽: 파트 트리 */}
-        <aside className="sidebar">
+        {/* 3D 뷰어 (베이스 레이어) */}
+        {Object.keys(assignedParts).length === 0 && (
+          <div className="empty-state">
+            <p>Click <strong>+</strong> on a part to assign an STL file</p>
+          </div>
+        )}
+        <Viewer3D
+          assignedParts={assignedParts}
+          selectedPartNumber={selectedPartNumber}
+          renderMode={renderMode}
+          onPartClick={selectPart}
+        />
+
+        {/* HUD 왼쪽: 파트 트리 */}
+        <aside className="hud-panel hud-left">
           <div className="sidebar-header">
             <span>Part Tree</span>
           </div>
-
           {bomWarnings.length > 0 && (
             <div className="bom-warnings">
               {bomWarnings.map((w, i) => <p key={i}>⚠ {w}</p>)}
             </div>
           )}
-
           <div className="sidebar-body">
             <PartTree
               tree={bomTree}
@@ -184,22 +195,7 @@ function App(): React.JSX.Element {
           </div>
         </aside>
 
-        {/* 중앙: 3D 뷰어 */}
-        <main className="viewer-area">
-          {Object.keys(assignedParts).length === 0 && (
-            <div className="empty-state">
-              <p>Click <strong>+</strong> on a part to assign an STL file</p>
-            </div>
-          )}
-          <Viewer3D
-            assignedParts={assignedParts}
-            selectedPartNumber={selectedPartNumber}
-            renderMode={renderMode}
-            onPartClick={selectPart}
-          />
-        </main>
-
-        {/* 오른쪽: 파트 정보 패널 */}
+        {/* HUD 오른쪽: 파트 정보 */}
         <PartInfoPanel
           tree={bomTree}
           selectedPartNumber={selectedPartNumber}

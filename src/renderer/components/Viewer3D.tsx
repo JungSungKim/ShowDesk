@@ -1,5 +1,6 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { SceneManager } from '@core/renderer/sceneManager'
+import type { ViewMode } from '@core/renderer/sceneManager'
 import { loadSTLFromBuffer } from '@core/loader/stlLoader'
 import type { AssignedPart, RenderMode } from '../store/useAppStore'
 
@@ -30,6 +31,7 @@ function Viewer3D({
   const loadedRef     = useRef<Set<string>>(new Set())
   const pointerMoved  = useRef(false)
   const pointerOrigin = useRef({ x: 0, y: 0 })
+  const [viewMode, setViewMode] = useState<ViewMode>('normal')
 
   // ── SceneManager 초기화 ─────────────────────────────────────
   useEffect(() => {
@@ -75,19 +77,21 @@ function Viewer3D({
         loadedRef.current.delete(loaded)
       }
     }
-  }, [assignedParts, centerMesh])
 
-  // ── 하이라이트 ─────────────────────────────────────────────
+    manager.setViewMode(viewMode, selectedPartNumber)
+  }, [assignedParts, centerMesh, viewMode, selectedPartNumber])
+
+  // ── 뷰 모드 변경 → SceneManager 적용 ──────────────────────────
   useEffect(() => {
-    sceneRef.current?.highlight(selectedPartNumber)
-  }, [selectedPartNumber])
+    sceneRef.current?.setViewMode(viewMode, selectedPartNumber)
+  }, [viewMode, selectedPartNumber])
 
   // ── 렌더 모드 ──────────────────────────────────────────────
   useEffect(() => {
     sceneRef.current?.setRenderMode(renderMode)
   }, [renderMode])
 
-  // ── 키보드 단축키 (F / 1 / 2 / 3) ──────────────────────────
+  // ── 키보드 단축키 (F / 1 / 2 / 3 / G / I) ─────────────────
   useEffect(() => {
     const handleKey = (e: KeyboardEvent): void => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
@@ -98,6 +102,12 @@ function Viewer3D({
         case '1': manager.setView('front'); break
         case '2': manager.setView('side');  break
         case '3': manager.setView('top');   break
+        case 'g': case 'G':
+          setViewMode(prev => prev === 'ghost' ? 'normal' : 'ghost')
+          break
+        case 'i': case 'I':
+          setViewMode(prev => prev === 'isolate' ? 'normal' : 'isolate')
+          break
       }
     }
     window.addEventListener('keydown', handleKey)
@@ -131,6 +141,13 @@ function Viewer3D({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
       />
+
+      {/* 뷰 모드 배지 */}
+      {viewMode !== 'normal' && (
+        <div className={`view-mode-badge ${viewMode}`}>
+          {viewMode === 'ghost' ? '◈ GHOST  G' : '◉ ISOLATE  I'}
+        </div>
+      )}
 
       {/* ViewCube 오버레이 */}
       <div className="view-controls">

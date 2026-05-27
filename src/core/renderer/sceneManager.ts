@@ -1,6 +1,8 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 
+export type ViewMode = 'normal' | 'ghost' | 'isolate'
+
 export class SceneManager {
   private scene: THREE.Scene
   private camera: THREE.PerspectiveCamera
@@ -8,6 +10,8 @@ export class SceneManager {
   private controls: OrbitControls
   private animationId: number | null = null
   private meshes = new Map<string, THREE.Mesh>()
+  private viewMode: ViewMode = 'normal'
+  private selectedName: string | null = null
 
   constructor(canvas: HTMLCanvasElement) {
     const { clientWidth: w, clientHeight: h } = canvas
@@ -66,14 +70,41 @@ export class SceneManager {
     return this.meshes.has(name)
   }
 
-  // ── 하이라이트 ──────────────────────────────────────────────
+  // ── 뷰 모드 (normal / ghost / isolate) + 하이라이트 통합 ───────
+
+  setViewMode(mode: ViewMode, activeName: string | null): void {
+    this.viewMode = mode
+    this.selectedName = activeName
+    this.applyMeshStates()
+  }
 
   highlight(name: string | null): void {
+    this.selectedName = name
+    this.applyMeshStates()
+  }
+
+  private applyMeshStates(): void {
+    const sel = this.selectedName
     for (const [key, mesh] of this.meshes) {
       const mat = mesh.material as THREE.MeshPhongMaterial
-      mat.color.set(key === name ? 0xff6b00 : 0xb0b8c8)
-      mat.opacity = 1
-      mat.transparent = false
+      const isSelected = key === sel && sel !== null
+
+      mat.color.set(isSelected ? 0xff6b00 : 0xb0b8c8)
+
+      if (this.viewMode === 'isolate') {
+        mesh.visible = sel === null || isSelected
+        mat.opacity = 1
+        mat.transparent = false
+      } else if (this.viewMode === 'ghost') {
+        mesh.visible = true
+        const opaque = sel === null || isSelected
+        mat.opacity = opaque ? 1 : 0.07
+        mat.transparent = !opaque
+      } else {
+        mesh.visible = true
+        mat.opacity = 1
+        mat.transparent = false
+      }
     }
   }
 
