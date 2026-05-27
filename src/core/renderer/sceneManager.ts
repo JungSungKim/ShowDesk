@@ -86,6 +86,21 @@ export class SceneManager {
     }
   }
 
+  // ── 레이캐스트 (3D 클릭 → 파트 감지) ─────────────────────────
+
+  raycast(clientX: number, clientY: number): string | null {
+    const canvas = this.renderer.domElement
+    const rect = canvas.getBoundingClientRect()
+    const x = ((clientX - rect.left) / rect.width) * 2 - 1
+    const y = -((clientY - rect.top) / rect.height) * 2 + 1
+
+    const raycaster = new THREE.Raycaster()
+    raycaster.setFromCamera(new THREE.Vector2(x, y), this.camera)
+
+    const hits = raycaster.intersectObjects(Array.from(this.meshes.values()))
+    return hits.length > 0 ? hits[0].object.name : null
+  }
+
   // ── 카메라 ─────────────────────────────────────────────────
 
   fitCamera(): void {
@@ -107,6 +122,36 @@ export class SceneManager {
       center.y + distance * 0.4,
       center.z + distance
     )
+    this.camera.near = maxDim * 0.001
+    this.camera.far = maxDim * 50
+    this.camera.updateProjectionMatrix()
+    this.controls.update()
+  }
+
+  setView(view: 'front' | 'side' | 'top'): void {
+    const box = new THREE.Box3()
+    for (const mesh of this.meshes.values()) box.expandByObject(mesh)
+    if (box.isEmpty()) return
+
+    const center = box.getCenter(new THREE.Vector3())
+    const size = box.getSize(new THREE.Vector3())
+    const maxDim = Math.max(size.x, size.y, size.z)
+    const fov = (this.camera.fov * Math.PI) / 180
+    const dist = (maxDim / 2 / Math.tan(fov / 2)) * 1.8
+
+    this.controls.target.copy(center)
+
+    if (view === 'front') {
+      this.camera.up.set(0, 1, 0)
+      this.camera.position.set(center.x, center.y, center.z + dist)
+    } else if (view === 'side') {
+      this.camera.up.set(0, 1, 0)
+      this.camera.position.set(center.x + dist, center.y, center.z)
+    } else {
+      this.camera.up.set(0, 0, -1)
+      this.camera.position.set(center.x, center.y + dist, center.z)
+    }
+
     this.camera.near = maxDim * 0.001
     this.camera.far = maxDim * 50
     this.camera.updateProjectionMatrix()

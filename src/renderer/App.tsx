@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react'
 import Viewer3D from './components/Viewer3D'
 import PartTree from './components/PartTree'
+import PartInfoPanel from './components/PartInfoPanel'
 import LandingScreen from './components/LandingScreen'
 import { useAppStore } from './store/useAppStore'
 import { parseBOM } from '@core/bom/bomParser'
@@ -159,9 +160,11 @@ function App(): React.JSX.Element {
     <div className="app-layout">
       {toolbar}
       <div className="workspace">
+
+        {/* 왼쪽: 파트 트리 */}
         <aside className="sidebar">
           <div className="sidebar-header">
-            <span>파트 트리</span>
+            <span>Part Tree</span>
           </div>
 
           {bomWarnings.length > 0 && (
@@ -181,18 +184,28 @@ function App(): React.JSX.Element {
           </div>
         </aside>
 
+        {/* 중앙: 3D 뷰어 */}
         <main className="viewer-area">
           {Object.keys(assignedParts).length === 0 && (
             <div className="empty-state">
-              <p>파트 트리에서 <strong>+</strong> 버튼을 눌러<br />각 파트에 STL 파일을 지정하세요</p>
+              <p>Click <strong>+</strong> on a part to assign an STL file</p>
             </div>
           )}
           <Viewer3D
             assignedParts={assignedParts}
             selectedPartNumber={selectedPartNumber}
             renderMode={renderMode}
+            onPartClick={selectPart}
           />
         </main>
+
+        {/* 오른쪽: 파트 정보 패널 */}
+        <PartInfoPanel
+          tree={bomTree}
+          selectedPartNumber={selectedPartNumber}
+          isAssigned={selectedPartNumber ? !!assignedParts[selectedPartNumber] : false}
+        />
+
       </div>
     </div>
   )
