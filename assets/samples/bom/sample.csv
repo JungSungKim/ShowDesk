@@ -1,8 +1,8 @@
 part_number,part_name,quantity,material,description,parent_part
-ASSY-001,메인 어셈블리,1,,,
-BODY-001,하우징 본체,1,ABS,"메인 하우징 바디",ASSY-001
-LID-001,상단 커버,1,ABS,"상단 커버 플레이트",ASSY-001
-PCB-001,회로 기판,1,FR4,"메인 PCB",ASSY-001
-SCREW-M3,M3 나사,8,Steel,"M3×8mm 나사",ASSY-001
-BUTTON-001,전원 버튼,1,ABS,,BODY-001
-LED-001,상태 LED,3,,,PCB-001
+ASSY-001,Main Assembly,1,,,
+BODY-001,Housing Body,1,ABS,Main housing body,ASSY-001
+LID-001,Top Cover,1,ABS,Top cover plate,ASSY-001
+PCB-001,Circuit Board,1,FR4,Main PCB,ASSY-001
+SCREW-M3,M3 Screw,8,Steel,M3x8mm screw,ASSY-001
+BUTTON-001,Power Button,1,ABS,Power button,BODY-001
+LED-001,Status LED,3,,Status indicator LED,PCB-001

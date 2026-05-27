@@ -7,12 +7,18 @@ export interface LoadedSTL {
   mesh: THREE.Mesh
 }
 
-export function loadSTLFromBuffer(buffer: ArrayBuffer, fileName: string): LoadedSTL {
+export function loadSTLFromBuffer(
+  buffer: ArrayBuffer,
+  fileName: string,
+  { center = false }: { center?: boolean } = {}
+): LoadedSTL {
   const loader = new STLLoader()
   const geometry = loader.parse(buffer)
 
   geometry.computeVertexNormals()
-  geometry.center()
+  // center=true 는 STL-only 단독 뷰에서만 사용
+  // BOM-first 어셈블리 모드에서는 원래 좌표 유지
+  if (center) geometry.center()
 
   const name = fileName.replace(/\.stl$/i, '')
 

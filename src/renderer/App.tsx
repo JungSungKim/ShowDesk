@@ -147,6 +147,7 @@ function App(): React.JSX.Element {
             assignedParts={assignedParts}
             selectedPartNumber={null}
             renderMode={renderMode}
+            centerMesh={true}
           />
         </main>
       </div>

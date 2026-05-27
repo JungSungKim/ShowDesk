@@ -7,9 +7,10 @@ interface Viewer3DProps {
   assignedParts: Record<string, AssignedPart>
   selectedPartNumber: string | null
   renderMode: RenderMode
+  centerMesh?: boolean  // STL-only 모드: 단일 파트 원점 정렬
 }
 
-function Viewer3D({ assignedParts, selectedPartNumber, renderMode }: Viewer3DProps): React.JSX.Element {
+function Viewer3D({ assignedParts, selectedPartNumber, renderMode, centerMesh = false }: Viewer3DProps): React.JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const sceneRef = useRef<SceneManager | null>(null)
@@ -48,7 +49,7 @@ function Viewer3D({ assignedParts, selectedPartNumber, renderMode }: Viewer3DPro
     // 추가된 파트
     for (const [partNumber, { buffer }] of Object.entries(assignedParts)) {
       if (!loadedRef.current.has(partNumber)) {
-        const { mesh } = loadSTLFromBuffer(buffer, partNumber)
+        const { mesh } = loadSTLFromBuffer(buffer, partNumber, { center: centerMesh })
         manager.addNamedMesh(partNumber, mesh)
         loadedRef.current.add(partNumber)
       }
