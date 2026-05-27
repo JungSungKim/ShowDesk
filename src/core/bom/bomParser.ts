@@ -49,10 +49,10 @@ function norm(s: string): string {
 
 const ALIASES: Record<keyof Omit<BOMRow, 'raw'>, string[]> = {
   partNumber:       ['partnumber', 'partno', 'part', 'id', 'itemno', 'itemnumber', 'number', 'pn'],
-  partName:         ['partname', 'name', 'itemname', 'title', 'description', 'desc'],
+  partName:         ['partname', 'name', 'itemname', 'title'],
   quantity:         ['quantity', 'qty', 'count', 'amount', 'ea', 'pcs'],
   material:         ['material', 'mat', 'materialtype'],
-  description:      ['note', 'notes', 'remark', 'remarks', 'comment'],
+  description:      ['description', 'desc', 'note', 'notes', 'remark', 'remarks', 'comment'],
   parentPartNumber: ['parent', 'parentpart', 'parentno', 'parentid', 'assemblyno', 'assembly', 'parentpartnumber']
 }
 
