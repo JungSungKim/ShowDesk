@@ -147,6 +147,7 @@ npm test
 ### Electron IPC
 - 파일 시스템 접근은 반드시 main 프로세스에서 — renderer에서 직접 fs 접근 금지
 - preload에서 contextBridge로 안전하게 노출
+- `crypto.randomUUID()` — Electron renderer에서 네이티브 지원, uuid 패키지 불필요
 
 ### Three.js 씬
 - 오브젝트 이름(`.name`)이 BOM 매핑 키 — STL 로드 시 파일명을 오브젝트명으로 설정
@@ -164,6 +165,16 @@ npm test
 ### Ghost 모드 밝기 변동
 - 대형 반투명 메시가 shadow map에 기여하면 scene 밝기가 오브젝트 크기에 따라 변동
 - 해결: ghost 메시는 `mesh.castShadow = false`, 선택/불투명 메시만 `castShadow = true`
+
+### 자동 회전 (OrbitControls)
+- `controls.autoRotate = true` + `autoRotateSpeed = +2.5` → 시계 방향
+- `controls.autoRotate = true` + `autoRotateSpeed = -2.5` → 반시계 방향
+- 정지: `controls.autoRotate = false` (speed 값은 유지해도 무방)
+
+### React ↔ 3D 씬 동기화
+- 씬 내 객체 추적은 `useRef<Set<string>>(new Set())`으로 관리 — React state가 아님
+- 예: `loadedRef`(메시), `pinnedIdsRef`(핀) — effect에서 diff 후 add/remove만 수행
+- 매 렌더마다 전체 clear/re-add 금지 (깜빡임 + 성능 저하)
 
 ---
 
