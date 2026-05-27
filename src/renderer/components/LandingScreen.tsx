@@ -1,5 +1,6 @@
 import React from 'react'
 import { parseBOM } from '@core/bom/bomParser'
+import { xlsxToCsv } from '@core/bom/xlsxLoader'
 import { deserializeProject } from '@core/bom/project'
 import { useAppStore } from '../store/useAppStore'
 import '../styles/landing.css'
@@ -35,6 +36,7 @@ function LandingScreen(): React.JSX.Element {
           // 파일이 없으면 미매핑 상태로 남김
         }
       }
+      store.setPins(project.pins ?? [])
       store.setProjectPath(filePath)
       store.markClean()
     } catch (e) {
@@ -46,13 +48,15 @@ function LandingScreen(): React.JSX.Element {
 
   const handleOpenBOM = async (): Promise<void> => {
     const filePath = await window.api.openFileDialog([
-      { name: 'BOM Files', extensions: ['csv'] }
+      { name: 'BOM Files', extensions: ['csv', 'xlsx'] }
     ])
     if (!filePath) return
     setLoading(true)
     try {
       const buf = await window.api.readFile(filePath)
-      const text = new TextDecoder().decode(buf)
+      const text = filePath.toLowerCase().endsWith('.xlsx')
+        ? xlsxToCsv(buf)
+        : new TextDecoder().decode(buf)
       const { tree, warnings } = parseBOM(text)
       enterBomFirst(tree, warnings, filePath)
     } finally {
@@ -89,7 +93,7 @@ function LandingScreen(): React.JSX.Element {
         <button className="landing-card primary" onClick={handleOpenBOM}>
           <span className="card-icon">📋</span>
           <span className="card-title">BOM으로 시작</span>
-          <span className="card-desc">CSV 불러온 후 파트별 STL 지정</span>
+          <span className="card-desc">CSV / Excel 불러온 후 파트별 STL 지정</span>
         </button>
 
         <button className="landing-card" onClick={handleOpenSTL}>

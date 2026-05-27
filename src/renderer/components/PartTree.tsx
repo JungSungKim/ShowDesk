@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import type { BOMNode } from '@core/bom/types'
 
 interface PartTreeProps {
@@ -9,23 +9,57 @@ interface PartTreeProps {
   onAssign: (partNumber: string) => void
 }
 
+function nodeMatches(node: BOMNode, q: string): boolean {
+  return (
+    node.partNumber.toLowerCase().includes(q) ||
+    node.partName.toLowerCase().includes(q)
+  )
+}
+
+function filterTree(nodes: BOMNode[], q: string): BOMNode[] {
+  return nodes.flatMap((node) => {
+    if (nodeMatches(node, q)) return [node]
+    const filteredChildren = filterTree(node.children, q)
+    if (filteredChildren.length > 0) return [{ ...node, children: filteredChildren }]
+    return []
+  })
+}
+
 function PartTreeNode({
   node,
   assignedPartNumbers,
   selectedPartNumber,
   onSelect,
-  onAssign
+  onAssign,
+  forceExpanded,
+  query,
 }: {
   node: BOMNode
   assignedPartNumbers: Set<string>
   selectedPartNumber: string | null
   onSelect: (partNumber: string) => void
   onAssign: (partNumber: string) => void
+  forceExpanded: boolean
+  query: string
 }): React.JSX.Element {
   const [expanded, setExpanded] = useState(true)
+  const isOpen = forceExpanded || expanded
   const hasChildren = node.children.length > 0
   const isSelected = node.partNumber === selectedPartNumber
   const isMapped = assignedPartNumbers.has(node.partNumber)
+
+  const highlightText = (text: string): React.JSX.Element => {
+    if (!query) return <>{text}</>
+    const idx = text.toLowerCase().indexOf(query)
+    if (idx === -1) return <>{text}</>
+    return (
+      <>
+        {text.slice(0, idx)}
+        <mark className="tree-highlight">{text.slice(idx, idx + query.length)}</mark>
+        {text.slice(idx + query.length)}
+      </>
+    )
+  }
 
   return (
     <li className="tree-item">
@@ -38,7 +72,7 @@ function PartTreeNode({
           className={`tree-toggle ${hasChildren ? '' : 'invisible'}`}
           onClick={(e) => { e.stopPropagation(); setExpanded((v) => !v) }}
         >
-          {expanded ? '▾' : '▸'}
+          {isOpen ? '▾' : '▸'}
         </span>
 
         <span
@@ -47,7 +81,7 @@ function PartTreeNode({
         />
 
         <span className="tree-name" title={`${node.partNumber} — ${node.partName}`}>
-          {node.partName}
+          {highlightText(node.partName)}
         </span>
 
         {node.quantity > 1 && (
@@ -63,7 +97,7 @@ function PartTreeNode({
         </button>
       </div>
 
-      {hasChildren && expanded && (
+      {hasChildren && isOpen && (
         <ul className="tree-children">
           {node.children.map((child) => (
             <PartTreeNode
@@ -73,6 +107,8 @@ function PartTreeNode({
               selectedPartNumber={selectedPartNumber}
               onSelect={onSelect}
               onAssign={onAssign}
+              forceExpanded={forceExpanded}
+              query={query}
             />
           ))}
         </ul>
@@ -82,6 +118,14 @@ function PartTreeNode({
 }
 
 function PartTree({ tree, assignedPartNumbers, selectedPartNumber, onSelect, onAssign }: PartTreeProps): React.JSX.Element {
+  const [query, setQuery] = useState('')
+
+  const trimmedQuery = query.trim().toLowerCase()
+  const displayTree = useMemo(
+    () => trimmedQuery ? filterTree(tree, trimmedQuery) : tree,
+    [tree, trimmedQuery]
+  )
+
   if (tree.length === 0) {
     return (
       <div className="tree-empty">
@@ -90,27 +134,50 @@ function PartTree({ tree, assignedPartNumbers, selectedPartNumber, onSelect, onA
     )
   }
 
-  const total = countNodes(tree)
+  const total    = countNodes(tree)
   const assigned = countAssigned(tree, assignedPartNumbers)
 
   return (
     <>
+      <div className="tree-search">
+        <input
+          className="tree-search-input"
+          type="text"
+          placeholder="파트 검색…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          spellCheck={false}
+        />
+        {query && (
+          <button className="tree-search-clear" onClick={() => setQuery('')}>✕</button>
+        )}
+      </div>
+
       <div className="tree-progress">
         <div className="tree-progress-bar" style={{ width: `${(assigned / total) * 100}%` }} />
         <span className="tree-progress-label">{assigned} / {total} 연결됨</span>
       </div>
-      <ul className="tree-root">
-        {tree.map((node) => (
-          <PartTreeNode
-            key={node.partNumber}
-            node={node}
-            assignedPartNumbers={assignedPartNumbers}
-            selectedPartNumber={selectedPartNumber}
-            onSelect={onSelect}
-            onAssign={onAssign}
-          />
-        ))}
-      </ul>
+
+      {displayTree.length === 0 ? (
+        <div className="tree-empty">
+          <p>'{query}' 검색 결과 없음</p>
+        </div>
+      ) : (
+        <ul className="tree-root">
+          {displayTree.map((node) => (
+            <PartTreeNode
+              key={node.partNumber}
+              node={node}
+              assignedPartNumbers={assignedPartNumbers}
+              selectedPartNumber={selectedPartNumber}
+              onSelect={onSelect}
+              onAssign={onAssign}
+              forceExpanded={!!trimmedQuery}
+              query={trimmedQuery}
+            />
+          ))}
+        </ul>
+      )}
     </>
   )
 }

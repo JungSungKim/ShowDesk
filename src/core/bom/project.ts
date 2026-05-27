@@ -1,6 +1,13 @@
 export const PROJECT_VERSION = '1.0'
 export const PROJECT_EXT = '.showdesk'
 
+export interface AnnotationPin {
+  id: string
+  position: { x: number; y: number; z: number }
+  label: string
+  partNumber: string | null
+}
+
 export interface ShowDeskProject {
   version: typeof PROJECT_VERSION
   bomFilePath: string
@@ -8,6 +15,7 @@ export interface ShowDeskProject {
     partNumber: string
     stlFilePath: string
   }>
+  pins?: AnnotationPin[]
 }
 
 export function serializeProject(project: ShowDeskProject): string {

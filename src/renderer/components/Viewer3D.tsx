@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { SceneManager } from '@core/renderer/sceneManager'
 import type { ViewMode } from '@core/renderer/sceneManager'
 import { loadSTLFromBuffer } from '@core/loader/stlLoader'
-import type { AssignedPart, RenderMode } from '../store/useAppStore'
+import type { AssignedPart, RenderMode, AnnotationPin } from '../store/useAppStore'
 
 interface Viewer3DProps {
   assignedParts: Record<string, AssignedPart>
@@ -10,6 +10,12 @@ interface Viewer3DProps {
   renderMode: RenderMode
   centerMesh?: boolean
   onPartClick?: (partNumber: string | null) => void
+  // 핀 모드
+  pinMode?: boolean
+  selectedPinId?: string | null
+  pins?: AnnotationPin[]
+  onPinAdd?: (pin: AnnotationPin) => void
+  onPinClick?: (id: string | null) => void
 }
 
 const VIEW_BTNS = [
@@ -18,20 +24,29 @@ const VIEW_BTNS = [
   { key: 'top',   label: 'Top',   shortcut: '3' },
 ] as const
 
+type RotateDir = 'cw' | 'ccw' | 'off'
+
 function Viewer3D({
   assignedParts,
   selectedPartNumber,
   renderMode,
   centerMesh = false,
-  onPartClick
+  onPartClick,
+  pinMode = false,
+  selectedPinId = null,
+  pins = [],
+  onPinAdd,
+  onPinClick,
 }: Viewer3DProps): React.JSX.Element {
   const containerRef  = useRef<HTMLDivElement>(null)
   const canvasRef     = useRef<HTMLCanvasElement>(null)
   const sceneRef      = useRef<SceneManager | null>(null)
   const loadedRef     = useRef<Set<string>>(new Set())
+  const pinnedIdsRef  = useRef<Set<string>>(new Set())
   const pointerMoved  = useRef(false)
   const pointerOrigin = useRef({ x: 0, y: 0 })
   const [viewMode, setViewMode] = useState<ViewMode>('normal')
+  const [rotateDir, setRotateDir] = useState<RotateDir>('off')
 
   // ── SceneManager 초기화 ─────────────────────────────────────
   useEffect(() => {
@@ -39,9 +54,10 @@ function Viewer3D({
     const container = containerRef.current
     if (!canvas || !container) return
 
-    const manager = new SceneManager(canvas)
+    const manager = new SceneManager(canvas, container)
     sceneRef.current = manager
     loadedRef.current = new Set()
+    pinnedIdsRef.current = new Set()
 
     const observer = new ResizeObserver((entries) => {
       const { width, height } = entries[0].contentRect
@@ -81,7 +97,7 @@ function Viewer3D({
     manager.setViewMode(viewMode, selectedPartNumber)
   }, [assignedParts, centerMesh, viewMode, selectedPartNumber])
 
-  // ── 뷰 모드 변경 → SceneManager 적용 ──────────────────────────
+  // ── 뷰 모드 변경 ───────────────────────────────────────────
   useEffect(() => {
     sceneRef.current?.setViewMode(viewMode, selectedPartNumber)
   }, [viewMode, selectedPartNumber])
@@ -91,7 +107,36 @@ function Viewer3D({
     sceneRef.current?.setRenderMode(renderMode)
   }, [renderMode])
 
-  // ── 키보드 단축키 (F / 1 / 2 / 3 / G / I) ─────────────────
+  // ── 핀 동기화 ──────────────────────────────────────────────
+  useEffect(() => {
+    const manager = sceneRef.current
+    if (!manager) return
+
+    const newIds = new Set(pins.map(p => p.id))
+
+    for (const id of pinnedIdsRef.current) {
+      if (!newIds.has(id)) {
+        manager.removePin(id)
+        pinnedIdsRef.current.delete(id)
+      }
+    }
+
+    for (const pin of pins) {
+      if (!pinnedIdsRef.current.has(pin.id)) {
+        manager.addPin(pin)
+        pinnedIdsRef.current.add(pin.id)
+      } else {
+        manager.updatePinLabel(pin.id, pin.label)
+      }
+    }
+  }, [pins])
+
+  // ── 선택 핀 하이라이트 ──────────────────────────────────────
+  useEffect(() => {
+    sceneRef.current?.highlightPin(selectedPinId)
+  }, [selectedPinId])
+
+  // ── 키보드 단축키 ──────────────────────────────────────────
   useEffect(() => {
     const handleKey = (e: KeyboardEvent): void => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
@@ -134,7 +179,13 @@ function Viewer3D({
     return () => window.removeEventListener('keydown', handleKey)
   }, [])
 
-  // ── 포인터 클릭 → 레이캐스트 ───────────────────────────────
+  // ── 회전 핸들러 ────────────────────────────────────────────
+  const handleRotate = (dir: RotateDir): void => {
+    setRotateDir(dir)
+    sceneRef.current?.setAutoRotate(dir)
+  }
+
+  // ── 포인터 이벤트 ──────────────────────────────────────────
   const handlePointerDown = (e: React.PointerEvent): void => {
     pointerOrigin.current = { x: e.clientX, y: e.clientY }
     pointerMoved.current = false
@@ -147,8 +198,34 @@ function Viewer3D({
   }
 
   const handlePointerUp = (e: React.PointerEvent): void => {
-    if (pointerMoved.current || !onPartClick) return
-    const name = sceneRef.current?.raycast(e.clientX, e.clientY) ?? null
+    if (pointerMoved.current) return
+    const manager = sceneRef.current
+
+    if (pinMode) {
+      // 기존 핀 클릭 확인
+      const pinId = manager?.raycastPin(e.clientX, e.clientY) ?? null
+      if (pinId) {
+        onPinClick?.(pinId)
+        return
+      }
+      // 메시 표면에 새 핀 배치
+      const hit = manager?.raycastWithPoint(e.clientX, e.clientY) ?? null
+      if (hit && onPinAdd) {
+        onPinAdd({
+          id: crypto.randomUUID(),
+          position: { x: hit.point.x, y: hit.point.y, z: hit.point.z },
+          label: 'Pin',
+          partNumber: hit.name
+        })
+      } else {
+        // 빈 공간 클릭 → 핀 선택 해제
+        onPinClick?.(null)
+      }
+      return
+    }
+
+    if (!onPartClick) return
+    const name = manager?.raycast(e.clientX, e.clientY) ?? null
     onPartClick(name)
   }
 
@@ -156,7 +233,10 @@ function Viewer3D({
     <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative' }}>
       <canvas
         ref={canvasRef}
-        style={{ width: '100%', height: '100%', display: 'block', outline: 'none' }}
+        style={{
+          width: '100%', height: '100%', display: 'block', outline: 'none',
+          cursor: pinMode ? 'crosshair' : 'default'
+        }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -166,6 +246,13 @@ function Viewer3D({
       {viewMode !== 'normal' && (
         <div className={`view-mode-badge ${viewMode}`}>
           {viewMode === 'ghost' ? '◈ GHOST  G' : '◉ ISOLATE  I'}
+        </div>
+      )}
+
+      {/* 핀 모드 배지 */}
+      {pinMode && (
+        <div className="view-mode-badge pin-mode">
+          📍 PIN MODE
         </div>
       )}
 
@@ -188,6 +275,25 @@ function Viewer3D({
         >
           Fit
         </button>
+
+        {/* 회전 버튼 */}
+        <div className="rotate-controls">
+          <button
+            className={`btn-rotate ${rotateDir === 'ccw' ? 'active' : ''}`}
+            title="시계 반대 방향 회전"
+            onClick={() => handleRotate(rotateDir === 'ccw' ? 'off' : 'ccw')}
+          >↺</button>
+          <button
+            className={`btn-rotate stop ${rotateDir !== 'off' ? '' : 'active'}`}
+            title="회전 정지"
+            onClick={() => handleRotate('off')}
+          >◼</button>
+          <button
+            className={`btn-rotate ${rotateDir === 'cw' ? 'active' : ''}`}
+            title="시계 방향 회전"
+            onClick={() => handleRotate(rotateDir === 'cw' ? 'off' : 'cw')}
+          >↻</button>
+        </div>
       </div>
     </div>
   )

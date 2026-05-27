@@ -3,8 +3,11 @@ import Viewer3D from './components/Viewer3D'
 import PartTree from './components/PartTree'
 import PartInfoPanel from './components/PartInfoPanel'
 import LandingScreen from './components/LandingScreen'
+import PinEditor from './components/PinEditor'
 import { useAppStore } from './store/useAppStore'
+import type { AnnotationPin } from './store/useAppStore'
 import { parseBOM } from '@core/bom/bomParser'
+import { xlsxToCsv } from '@core/bom/xlsxLoader'
 import { serializeProject } from '@core/bom/project'
 import './styles/app.css'
 
@@ -20,14 +23,21 @@ function App(): React.JSX.Element {
     bomTree, bomWarnings, bomFilePath,
     assignedParts, stlOnlyFileName,
     selectedPartNumber, projectPath, isDirty, isLoading,
+    pins,
     enterBomFirst, enterStlOnly, assignPart, selectPart,
-    setRenderMode, setProjectPath, markClean, setLoading, reset
+    setRenderMode, setProjectPath, markClean, setLoading, reset,
+    addPin, updatePin, removePin,
   } = useAppStore()
+
+  const [pinMode, setPinMode] = useState(false)
+  const [selectedPinId, setSelectedPinId] = useState<string | null>(null)
 
   const assignedPartNumbers = useMemo(
     () => new Set(Object.keys(assignedParts)),
     [assignedParts]
   )
+
+  const selectedPin = selectedPinId ? pins.find(p => p.id === selectedPinId) ?? null : null
 
   // ── 파트 STL 지정 ──────────────────────────────────────────
   const handleAssignPart = async (partNumber: string): Promise<void> => {
@@ -53,21 +63,26 @@ function App(): React.JSX.Element {
       parts: Object.entries(assignedParts).map(([partNumber, { filePath }]) => ({
         partNumber,
         stlFilePath: filePath
-      }))
+      })),
+      pins,
     }
     await window.api.writeFile(savePath, serializeProject(project))
     setProjectPath(savePath)
     markClean()
   }
 
-  // ── BOM-first: BOM 재로드 ───────────────────────────────────
+  // ── BOM 재로드 ─────────────────────────────────────────────
   const handleReloadBOM = async (): Promise<void> => {
-    const filePath = await window.api.openFileDialog([{ name: 'BOM Files', extensions: ['csv'] }])
+    const filePath = await window.api.openFileDialog([
+      { name: 'BOM Files', extensions: ['csv', 'xlsx'] }
+    ])
     if (!filePath) return
     setLoading(true)
     try {
       const buf = await window.api.readFile(filePath)
-      const text = new TextDecoder().decode(buf)
+      const text = filePath.toLowerCase().endsWith('.xlsx')
+        ? xlsxToCsv(buf)
+        : new TextDecoder().decode(buf)
       const { tree, warnings } = parseBOM(text)
       enterBomFirst(tree, warnings, filePath)
     } finally {
@@ -120,6 +135,21 @@ function App(): React.JSX.Element {
     }
   }
 
+  // ── 핀 핸들러 ─────────────────────────────────────────────
+  const handlePinAdd = (pin: AnnotationPin): void => {
+    addPin(pin)
+    setSelectedPinId(pin.id)
+  }
+
+  const handlePinClick = (id: string | null): void => {
+    setSelectedPinId(id)
+  }
+
+  const togglePinMode = (): void => {
+    setPinMode(v => !v)
+    setSelectedPinId(null)
+  }
+
   // ── 랜딩 화면 ─────────────────────────────────────────────
   if (mode === 'landing') return <LandingScreen />
 
@@ -151,6 +181,15 @@ function App(): React.JSX.Element {
       )}
 
       <div className="spacer" />
+
+      {/* 핀 모드 토글 */}
+      <button
+        className={`btn-pin-mode ${pinMode ? 'active' : ''}`}
+        onClick={togglePinMode}
+        title={pinMode ? '핀 모드 종료' : '어노테이션 핀 추가'}
+      >
+        📍 {pins.length > 0 ? pins.length : ''} Pin
+      </button>
 
       <div className="render-modes">
         {RENDER_MODES.map((m) => (
@@ -187,7 +226,20 @@ function App(): React.JSX.Element {
             selectedPartNumber={null}
             renderMode={renderMode}
             centerMesh={true}
+            pinMode={pinMode}
+            selectedPinId={selectedPinId}
+            pins={pins}
+            onPinAdd={handlePinAdd}
+            onPinClick={handlePinClick}
           />
+          {selectedPin && (
+            <PinEditor
+              pin={selectedPin}
+              onUpdateLabel={updatePin}
+              onDelete={removePin}
+              onClose={() => setSelectedPinId(null)}
+            />
+          )}
         </main>
       </div>
     )
@@ -199,7 +251,6 @@ function App(): React.JSX.Element {
       {toolbar}
       <div className="viewer-area">
 
-        {/* 3D 뷰어 (베이스 레이어) */}
         {Object.keys(assignedParts).length === 0 && (
           <div className="empty-state">
             <p>Click <strong>+</strong> on a part to assign an STL file</p>
@@ -210,7 +261,22 @@ function App(): React.JSX.Element {
           selectedPartNumber={selectedPartNumber}
           renderMode={renderMode}
           onPartClick={selectPart}
+          pinMode={pinMode}
+          selectedPinId={selectedPinId}
+          pins={pins}
+          onPinAdd={handlePinAdd}
+          onPinClick={handlePinClick}
         />
+
+        {/* 핀 에디터 오버레이 */}
+        {selectedPin && (
+          <PinEditor
+            pin={selectedPin}
+            onUpdateLabel={updatePin}
+            onDelete={removePin}
+            onClose={() => setSelectedPinId(null)}
+          />
+        )}
 
         {/* HUD 왼쪽: 파트 트리 */}
         <aside className="hud-panel hud-left">

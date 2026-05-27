@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import type { BOMNode } from '@core/bom/types'
+import type { AnnotationPin } from '@core/bom/project'
 
+export type { AnnotationPin }
 export type AppMode = 'landing' | 'bom-first' | 'stl-only'
 export type RenderMode = 'shaded' | 'wireframe' | 'shaded+edge'
 
@@ -12,29 +14,17 @@ export interface AssignedPart {
 interface AppState {
   mode: AppMode
   renderMode: RenderMode
-
-  // BOM
   bomTree: BOMNode[]
   bomWarnings: string[]
   bomFilePath: string | null
-
-  // 파트별 STL (partNumber → 할당 정보)
   assignedParts: Record<string, AssignedPart>
-
-  // STL-only 모드에서의 단일 파일명
   stlOnlyFileName: string | null
-
-  // 선택된 파트
   selectedPartNumber: string | null
-
-  // 프로젝트
   projectPath: string | null
   isDirty: boolean
-
-  // 로딩
   isLoading: boolean
+  pins: AnnotationPin[]
 
-  // Actions
   enterBomFirst: (tree: BOMNode[], warnings: string[], filePath: string) => void
   enterStlOnly: (buffer: ArrayBuffer, filePath: string) => void
   assignPart: (partNumber: string, buffer: ArrayBuffer, filePath: string) => void
@@ -45,13 +35,13 @@ interface AppState {
   markClean: () => void
   setLoading: (v: boolean) => void
   reset: () => void
+  addPin: (pin: AnnotationPin) => void
+  updatePin: (id: string, label: string) => void
+  removePin: (id: string) => void
+  setPins: (pins: AnnotationPin[]) => void
 }
 
-const initialState: Omit<AppState, keyof Omit<AppState, keyof {
-  mode: AppMode; renderMode: RenderMode; bomTree: BOMNode[]; bomWarnings: string[];
-  bomFilePath: null; assignedParts: Record<string, AssignedPart>; stlOnlyFileName: null;
-  selectedPartNumber: null; projectPath: null; isDirty: boolean; isLoading: boolean;
-}>> = {
+export const useAppStore = create<AppState>((set) => ({
   mode: 'landing',
   renderMode: 'shaded',
   bomTree: [],
@@ -62,14 +52,11 @@ const initialState: Omit<AppState, keyof Omit<AppState, keyof {
   selectedPartNumber: null,
   projectPath: null,
   isDirty: false,
-  isLoading: false
-}
-
-export const useAppStore = create<AppState>((set) => ({
-  ...initialState,
+  isLoading: false,
+  pins: [],
 
   enterBomFirst: (bomTree, bomWarnings, bomFilePath) =>
-    set({ mode: 'bom-first', bomTree, bomWarnings, bomFilePath, assignedParts: {}, selectedPartNumber: null, isDirty: false }),
+    set({ mode: 'bom-first', bomTree, bomWarnings, bomFilePath, assignedParts: {}, selectedPartNumber: null, isDirty: false, pins: [] }),
 
   enterStlOnly: (buffer, filePath) => {
     const fileName = filePath.split(/[\\/]/).pop() ?? 'model.stl'
@@ -80,7 +67,8 @@ export const useAppStore = create<AppState>((set) => ({
       assignedParts: { [partNumber]: { buffer, filePath } },
       bomTree: [],
       selectedPartNumber: null,
-      isDirty: false
+      isDirty: false,
+      pins: []
     })
   },
 
@@ -102,5 +90,16 @@ export const useAppStore = create<AppState>((set) => ({
   setProjectPath: (projectPath) => set({ projectPath }),
   markClean: () => set({ isDirty: false }),
   setLoading: (isLoading) => set({ isLoading }),
-  reset: () => set({ ...initialState })
+
+  reset: () => set({
+    mode: 'landing', renderMode: 'shaded', bomTree: [], bomWarnings: [],
+    bomFilePath: null, assignedParts: {}, stlOnlyFileName: null,
+    selectedPartNumber: null, projectPath: null, isDirty: false, isLoading: false, pins: []
+  }),
+
+  addPin: (pin) => set((s) => ({ pins: [...s.pins, pin], isDirty: true })),
+  updatePin: (id, label) =>
+    set((s) => ({ pins: s.pins.map(p => p.id === id ? { ...p, label } : p), isDirty: true })),
+  removePin: (id) => set((s) => ({ pins: s.pins.filter(p => p.id !== id), isDirty: true })),
+  setPins: (pins) => set({ pins }),
 }))
