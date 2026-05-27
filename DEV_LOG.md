@@ -6,34 +6,40 @@
 |------|------|
 | 최종 갱신 | 2026-05-27 |
 | 브랜치 | master |
-| 최신 커밋 | 95417b3 |
-| 미커밋 변경 | 있음 (STL 로더 + 뷰어 구현) |
+| 최신 커밋 | 5ffa6fa |
+| 미커밋 변경 | 없음 |
 
 ### 완료된 작업
-- 프로젝트 폴더 구조, 기획 문서, 메타 문서 세팅
-- Git 초기화 및 GitHub 연결
-- **Electron + electron-vite + React + Three.js 개발 환경 세팅** (Phase 0 완료)
-- **STL 로더 + 기본 3D 뷰어 구현** (Phase 1 진행 중)
-  - `src/core/loader/stlLoader.ts` — ASCII/Binary STL 파싱 (Three.js STLLoader 래핑)
-  - `src/core/renderer/sceneManager.ts` — Three.js 씬, 카메라, OrbitControls, 조명, 그리드
-  - `src/renderer/components/Viewer3D.tsx` — React 캔버스 컴포넌트, ResizeObserver 연동
-  - `src/renderer/store/useAppStore.ts` — Zustand 전역 상태 (STL 버퍼, 렌더 모드)
-  - `src/renderer/App.tsx` — 툴바 + 뷰어 레이아웃, 파일 열기, 렌더 모드 전환
-  - `src/main/index.ts` — IPC 핸들러 (파일 다이얼로그, fs 읽기/쓰기)
-  - `npm run dev` / `npm run build` 정상 동작 확인 ✅
 
-  - **BOM CSV 파서 + 파트 트리 UI** 구현
-    - `src/core/bom/types.ts` — BOMRow, BOMNode, BOMParseResult 타입
-    - `src/core/bom/bomParser.ts` — CSV 파싱, 컬럼 자동 감지, 트리 구성
-    - `src/renderer/components/PartTree.tsx` — 계층 트리 UI (매핑 상태 표시)
-    - `src/renderer/App.tsx` — 왼쪽 사이드바 레이아웃 + BOM 열기 버튼
-    - `assets/samples/bom/sample.csv` — 테스트용 샘플 BOM
-    - `npm run build` 정상 동작 확인 ✅
+**Phase 0** ✅
+- Electron + electron-vite + React + Three.js 개발 환경 세팅
+- IPC 핸들러, contextBridge, 기획 문서 3종, 메타 문서 세팅
+
+**Phase 1** ✅ (전체 완료)
+- STL 로더 + 기본 3D 뷰어 (회전/줌/팬, OrbitControls)
+- 렌더링 모드 전환 (Shaded / Wireframe / Shaded+Edge)
+- 와이어프레임: EdgesGeometry(5°) + CRT 형광 녹색(#39FF14), 후면 엣지 표시
+- 스테이지 조명 (SpotLight 핀 조명 + 그림자, 어두운 무대 연출)
+- BOM CSV 파싱 + 파트 트리 UI + BOM-first 워크플로우
+- Excel(.xlsx) BOM 지원 (SheetJS)
+- 파트별 STL 수동 지정 + 프로젝트 저장/열기 (.showdesk)
+- Auto Map (폴더 선택 → 파일명 일괄 매핑)
+- 파트 트리 클릭 → 3D 하이라이트, 3D 클릭 → 트리 동기화
+- 파트 정보 패널 (게임 스테이터스 스타일 HUD)
+- Ghost 모드(G) + Isolate 모드(I)
+- HUD 오버레이 레이아웃 (파트 트리·인포 패널이 3D 뷰 위에 부유)
+- 뷰 큐브(1/2/3), Fit(F), 스크린샷(Ctrl+Shift+S)
+- 랜딩 스크린 (프로젝트 열기 / BOM으로 시작 / STL만 열기)
+
+**Phase 2** (진행 중)
+- 파트 트리 검색 필터 (실시간 하이라이트) ✅
+- 어노테이션 핀 (CSS2DRenderer 레이블, .showdesk 직렬화) ✅
+- 오브젝트 자동 회전 (시계/반시계/정지 버튼) ✅
 
 ### 다음 추천 작업
-1. **BOM-3D 하이라이트 연동** — 파트 트리 클릭 시 해당 메시 하이라이트 (다중 STL 로드 필요)
-2. **드래그&드롭 STL 로드** — Viewer3D에 dragover/drop 이벤트 추가
-3. **뷰 큐브** — 정면/측면/상면 원클릭 이동
+1. **Exploded View** — 파트별 방향 벡터로 분해 애니메이션
+2. **단면도 슬라이싱** — 평면 클리핑으로 내부 구조 확인
+3. **수동 BOM-3D 매핑 UI** — 드래그 또는 우클릭 컨텍스트 메뉴
 
 ### 알려진 이슈
 - 없음
