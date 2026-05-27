@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import Viewer3D from './components/Viewer3D'
 import PartTree from './components/PartTree'
 import PartInfoPanel from './components/PartInfoPanel'
@@ -75,6 +75,38 @@ function App(): React.JSX.Element {
     }
   }
 
+  // ── 자동 매핑 ─────────────────────────────────────────────
+  const [autoMapResult, setAutoMapResult] = useState<string | null>(null)
+
+  const handleAutoMap = async (): Promise<void> => {
+    const dirPath = await window.api.openDirectoryDialog()
+    if (!dirPath) return
+    setLoading(true)
+    try {
+      const entries = await window.api.readDir(dirPath)
+      const stlMap = new Map<string, string>()
+      for (const e of entries) {
+        if (e.name.toLowerCase().endsWith('.stl')) {
+          stlMap.set(e.name.replace(/\.stl$/i, '').toLowerCase(), e.fullPath)
+        }
+      }
+      const flatten = (nodes: typeof bomTree): typeof bomTree => nodes.flatMap(n => [n, ...flatten(n.children)])
+      let matched = 0
+      for (const node of flatten(bomTree)) {
+        const fp = stlMap.get(node.partNumber.toLowerCase())
+        if (fp) {
+          const buf = await window.api.readFile(fp)
+          assignPart(node.partNumber, buf, fp)
+          matched++
+        }
+      }
+      setAutoMapResult(matched > 0 ? `${matched}개 파트 자동 매핑 완료` : '일치하는 파일 없음')
+      setTimeout(() => setAutoMapResult(null), 3000)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // ── STL-only: 새 파일 열기 ─────────────────────────────────
   const handleReopenSTL = async (): Promise<void> => {
     const filePath = await window.api.openFileDialog([{ name: 'STL Files', extensions: ['stl'] }])
@@ -99,9 +131,15 @@ function App(): React.JSX.Element {
       </button>
 
       {mode === 'bom-first' && (
-        <button className="btn-secondary" onClick={handleReloadBOM} disabled={isLoading}>
-          BOM 교체
-        </button>
+        <>
+          <button className="btn-secondary" onClick={handleReloadBOM} disabled={isLoading}>
+            BOM 교체
+          </button>
+          <button className="btn-secondary" onClick={handleAutoMap} disabled={isLoading} title="파트번호와 파일명이 일치하는 STL 일괄 지정">
+            Auto Map
+          </button>
+          {autoMapResult && <span className="automatch-toast">{autoMapResult}</span>}
+        </>
       )}
       {mode === 'stl-only' && (
         <>

@@ -7,8 +7,10 @@ const api = {
   saveFileDialog: (filters: Electron.FileFilter[], defaultName?: string) =>
     ipcRenderer.invoke('dialog:saveFile', filters, defaultName),
   readFile: (filePath: string) => ipcRenderer.invoke('fs:readFile', filePath),
-  writeFile: (filePath: string, data: string) =>
-    ipcRenderer.invoke('fs:writeFile', filePath, data)
+  writeFile: (filePath: string, data: string | ArrayBuffer) =>
+    ipcRenderer.invoke('fs:writeFile', filePath, data),
+  openDirectoryDialog: () => ipcRenderer.invoke('dialog:openDirectory'),
+  readDir: (dirPath: string) => ipcRenderer.invoke('fs:readDir', dirPath)
 }
 
 if (process.contextIsolated) {

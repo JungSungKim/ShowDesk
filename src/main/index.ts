@@ -1,6 +1,6 @@
 import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron'
 import { join } from 'path'
-import { readFile, writeFile } from 'fs/promises'
+import { readFile, writeFile, readdir } from 'fs/promises'
 import { is } from '@electron-toolkit/utils'
 
 function createWindow(): void {
@@ -48,8 +48,22 @@ ipcMain.handle('fs:readFile', async (_e, filePath: string) => {
   return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
 })
 
-ipcMain.handle('fs:writeFile', async (_e, filePath: string, data: string) => {
-  await writeFile(filePath, data, 'utf-8')
+ipcMain.handle('fs:writeFile', async (_e, filePath: string, data: string | ArrayBuffer) => {
+  if (typeof data === 'string') {
+    await writeFile(filePath, data, 'utf-8')
+  } else {
+    await writeFile(filePath, Buffer.from(data))
+  }
+})
+
+ipcMain.handle('dialog:openDirectory', async () => {
+  const result = await dialog.showOpenDialog({ properties: ['openDirectory'] })
+  return result.canceled ? null : result.filePaths[0]
+})
+
+ipcMain.handle('fs:readDir', async (_e, dirPath: string) => {
+  const names = await readdir(dirPath)
+  return names.map(name => ({ name, fullPath: join(dirPath, name) }))
 })
 
 // ── 앱 수명 주기 ────────────────────────────────────────────────

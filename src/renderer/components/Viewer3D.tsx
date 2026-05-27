@@ -108,6 +108,26 @@ function Viewer3D({
         case 'i': case 'I':
           setViewMode(prev => prev === 'isolate' ? 'normal' : 'isolate')
           break
+        case 's': case 'S':
+          if (e.ctrlKey && e.shiftKey) {
+            e.preventDefault()
+            ;(async () => {
+              const canvas = canvasRef.current
+              if (!canvas) return
+              const dataUrl = canvas.toDataURL('image/png')
+              const base64 = dataUrl.split(',')[1]
+              const binary = atob(base64)
+              const buf = new ArrayBuffer(binary.length)
+              const view = new Uint8Array(buf)
+              for (let i = 0; i < binary.length; i++) view[i] = binary.charCodeAt(i)
+              const savePath = await window.api.saveFileDialog(
+                [{ name: 'PNG Image', extensions: ['png'] }],
+                'screenshot.png'
+              )
+              if (savePath) await window.api.writeFile(savePath, buf)
+            })()
+          }
+          break
       }
     }
     window.addEventListener('keydown', handleKey)
