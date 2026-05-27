@@ -5,12 +5,12 @@
 - [x] 기획 문서 작성 (PRD, 기능 명세, UX 흐름)
 - [x] CLAUDE.md / 커맨드 파일 세팅
 - [x] Git 저장소 초기화 및 GitHub 연결
-- [ ] Electron + Vite + React + Three.js 환경 구성
+- [x] Electron + Vite + React + Three.js 환경 구성
 
 ## Phase 1 — MVP (3D 뷰어 + BOM 연동)
-- [ ] STL 파일 로드 (드래그&드롭, 파일 열기)
-- [ ] 기본 3D 뷰어 (회전/줌/팬)
-- [ ] 렌더링 모드 전환 (Shaded / Wireframe / Shaded+Edge)
+- [x] STL 파일 로드 (파일 열기)
+- [x] 기본 3D 뷰어 (회전/줌/팬)
+- [x] 렌더링 모드 전환 (Shaded / Wireframe / Shaded+Edge)
 - [ ] 뷰 큐브 (정면/측면/상면)
 - [ ] CSV/Excel BOM 파싱 및 파트 트리 UI
 - [ ] BOM-STL 자동 매핑 (파일명 기준)

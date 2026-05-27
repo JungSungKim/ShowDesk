@@ -1,0 +1,86 @@
+.landing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 12px;
+  background: #13132a;
+}
+
+.landing-logo {
+  font-size: 36px;
+  font-weight: 800;
+  color: #6c7cff;
+  letter-spacing: 0.08em;
+}
+
+.landing-sub {
+  font-size: 13px;
+  color: #445580;
+  margin-bottom: 24px;
+}
+
+.landing-cards {
+  display: flex;
+  gap: 16px;
+}
+
+.landing-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 160px;
+  padding: 28px 16px;
+  background: #1a1a38;
+  border: 1px solid #252550;
+  border-radius: 12px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  color: inherit;
+  font-family: inherit;
+}
+
+.landing-card:hover {
+  background: #20203e;
+  border-color: #3a3a6a;
+  transform: translateY(-2px);
+}
+
+.landing-card.primary {
+  border-color: #3b3bff;
+  background: #18183a;
+}
+
+.landing-card.primary:hover {
+  background: #1e1e48;
+  border-color: #5555ff;
+}
+
+.card-icon {
+  font-size: 28px;
+}
+
+.card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #c8d4f0;
+}
+
+.card-desc {
+  font-size: 11px;
+  color: #4a5878;
+  text-align: center;
+  line-height: 1.4;
+}
+
+@media (pointer: coarse) {
+  .landing-cards { gap: 20px; }
+  .landing-card { width: 180px; padding: 32px 20px; }
+  .card-icon { font-size: 34px; }
+  .card-title { font-size: 15px; }
+  .card-desc { font-size: 12px; }
+}

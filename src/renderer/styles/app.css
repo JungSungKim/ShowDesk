@@ -1,0 +1,374 @@
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Toolbar ─────────────────────────────── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  height: 46px;
+  background: #111128;
+  border-bottom: 1px solid #252545;
+  flex-shrink: 0;
+  touch-action: manipulation;
+}
+
+.logo {
+  font-size: 15px;
+  font-weight: 700;
+  color: #6c7cff;
+  letter-spacing: 0.06em;
+  margin-right: 6px;
+}
+
+.logo-btn {
+  font-size: 15px;
+  font-weight: 700;
+  color: #6c7cff;
+  letter-spacing: 0.06em;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 5px;
+  transition: background 0.15s;
+}
+.logo-btn:hover { background: #1e1e3a; }
+
+.btn-ghost {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  font-family: inherit;
+}
+
+.btn-save {
+  padding: 5px 13px;
+  background: #1e2e1e;
+  color: #66bb66;
+  border: 1px solid #2a4a2a;
+  border-radius: 5px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-save.dirty {
+  background: #2a2a1e;
+  color: #ccaa44;
+  border-color: #4a4a2a;
+}
+.btn-save:hover { filter: brightness(1.2); }
+
+.file-name {
+  font-size: 12px;
+  color: #6677aa;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spacer { flex: 1; }
+
+/* ── Buttons ─────────────────────────────── */
+.btn-primary {
+  padding: 7px 14px;
+  background: #3b3bff;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-size: 13px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s;
+}
+.btn-primary:hover:not(:disabled) { background: #5252ff; }
+.btn-primary:active:not(:disabled) { background: #2828dd; }
+.btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.btn-secondary {
+  padding: 7px 14px;
+  background: transparent;
+  color: #8899cc;
+  border: 1px solid #2a2a4a;
+  border-radius: 5px;
+  font-size: 13px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-secondary:hover:not(:disabled) { background: #1e1e3a; color: #ccd8ff; }
+.btn-secondary:active:not(:disabled) { background: #252545; }
+.btn-secondary:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.render-modes {
+  display: flex;
+  gap: 2px;
+  background: #1a1a30;
+  border-radius: 6px;
+  padding: 3px;
+}
+.btn-mode {
+  padding: 6px 12px;
+  background: transparent;
+  color: #7788aa;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s, color 0.12s;
+}
+.btn-mode:hover { background: #252545; color: #ccd8ff; }
+.btn-mode:active { background: #2a2a50; }
+.btn-mode.active { background: #3b3bff; color: #fff; }
+
+/* ── Workspace ───────────────────────────── */
+.workspace {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── Sidebar ─────────────────────────────── */
+.sidebar {
+  width: 240px;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  background: #13132a;
+  border-right: 1px solid #212140;
+  flex-shrink: 0;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #5566aa;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid #1e1e3c;
+}
+
+.part-count {
+  background: #252550;
+  color: #8899cc;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+.bom-warnings {
+  padding: 6px 10px;
+  background: #2a1a0a;
+  border-bottom: 1px solid #3a2a1a;
+  font-size: 11px;
+  color: #cc9944;
+}
+.bom-warnings p { margin: 2px 0; }
+
+.sidebar-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ── Part Tree ───────────────────────────── */
+.tree-root,
+.tree-children {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tree-item { width: 100%; }
+
+.tree-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 40px;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.1s;
+  border-bottom: 1px solid #191932;
+}
+.tree-row:hover { background: #1c1c3a; }
+.tree-row:active { background: #20203e; }
+.tree-row.selected { background: #22224a; }
+
+.tree-toggle {
+  font-size: 11px;
+  color: #556080;
+  width: 24px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.tree-toggle.invisible { visibility: hidden; }
+
+.tree-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.tree-dot.mapped   { background: #44cc88; }
+.tree-dot.unmapped { background: #cc4444; }
+
+.tree-name {
+  font-size: 12px;
+  color: #c0ccee;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tree-qty {
+  font-size: 10px;
+  color: #556688;
+  flex-shrink: 0;
+}
+
+.tree-assign-btn {
+  width: 28px;
+  height: 28px;
+  margin-right: 6px;
+  background: #1e1e3a;
+  color: #4a5878;
+  border: 1px solid #252545;
+  border-radius: 5px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  /* hover 없는 터치 환경에서도 항상 보임 — opacity 대신 색상으로 강조 */
+  opacity: 1;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+  line-height: 1;
+  padding: 0;
+}
+.tree-assign-btn:hover,
+.tree-assign-btn:focus-visible { background: #3b3bff; color: #fff; border-color: #3b3bff; outline: none; }
+.tree-assign-btn:active { background: #2828dd; }
+.tree-assign-btn.reassign { color: #44cc88; border-color: #1e3a2a; background: #111a14; }
+.tree-assign-btn.reassign:hover { background: #3b3bff; color: #fff; border-color: #3b3bff; }
+
+/* 매핑 진행률 바 */
+.tree-progress {
+  position: relative;
+  height: 20px;
+  background: #111128;
+  border-bottom: 1px solid #1e1e3c;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+.tree-progress-bar {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  background: #1a3a2a;
+  transition: width 0.3s;
+}
+.tree-progress-label {
+  position: relative;
+  font-size: 10px;
+  color: #44cc88;
+  padding: 0 10px;
+  z-index: 1;
+}
+
+.tree-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+}
+.tree-empty p {
+  font-size: 12px;
+  color: #3a4060;
+  line-height: 1.6;
+}
+
+/* ── Viewer area ─────────────────────────── */
+.viewer-area {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.empty-state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  z-index: 10;
+  pointer-events: none;
+}
+.empty-state p { color: #3a4060; font-size: 14px; }
+.empty-state .btn-primary { pointer-events: all; }
+
+/* ── 터치스크린 (pointer: coarse) ──────────── */
+@media (pointer: coarse) {
+  /* 툴바 높이 확장 */
+  .toolbar { height: 56px; gap: 10px; padding: 0 16px; }
+
+  /* 버튼 최소 높이 44px */
+  .btn-primary,
+  .btn-secondary,
+  .btn-save,
+  .logo-btn { min-height: 44px; padding: 0 16px; font-size: 14px; }
+
+  /* 렌더 모드 버튼 */
+  .btn-mode { padding: 8px 14px; font-size: 13px; min-height: 44px; }
+
+  /* 사이드바 너비 확장 */
+  .sidebar { width: 260px; }
+
+  /* 파트 트리 행 — 최소 48px */
+  .tree-row { height: 48px; gap: 8px; }
+
+  /* 펼치기 버튼 탭 타겟 확장 */
+  .tree-toggle { width: 32px; font-size: 13px; }
+
+  /* 지정 버튼 확장 */
+  .tree-assign-btn { width: 36px; height: 36px; font-size: 16px; border-radius: 6px; }
+
+  /* 매핑 점 크게 */
+  .tree-dot { width: 8px; height: 8px; }
+
+  /* 트리 폰트 */
+  .tree-name { font-size: 13px; }
+  .tree-qty  { font-size: 12px; }
+
+  /* 진행률 바 높이 */
+  .tree-progress { height: 26px; }
+  .tree-progress-label { font-size: 11px; }
+}
