@@ -1,11 +1,11 @@
 # ShowDesk — ROADMAP
 
 ## Phase 0 — 환경 세팅 (현재)
-- [ ] 프로젝트 폴더 구조 생성
-- [ ] 기획 문서 작성 (PRD, 기능 명세, UX 흐름)
-- [ ] CLAUDE.md / 커맨드 파일 세팅
+- [x] 프로젝트 폴더 구조 생성
+- [x] 기획 문서 작성 (PRD, 기능 명세, UX 흐름)
+- [x] CLAUDE.md / 커맨드 파일 세팅
+- [x] Git 저장소 초기화 및 GitHub 연결
 - [ ] Electron + Vite + React + Three.js 환경 구성
-- [ ] Git 저장소 초기화 및 GitHub 연결
 
 ## Phase 1 — MVP (3D 뷰어 + BOM 연동)
 - [ ] STL 파일 로드 (드래그&드롭, 파일 열기)
