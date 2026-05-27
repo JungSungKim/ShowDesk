@@ -1,0 +1,86 @@
+solid BUTTON-001
+  facet normal 0.000000 0.000000 -1.000000
+    outer loop
+      vertex 26.0000 16.0000 30.0000
+      vertex 34.0000 24.0000 30.0000
+      vertex 34.0000 16.0000 30.0000
+    endloop
+  endfacet
+  facet normal 0.000000 0.000000 -1.000000
+    outer loop
+      vertex 26.0000 16.0000 30.0000
+      vertex 26.0000 24.0000 30.0000
+      vertex 34.0000 24.0000 30.0000
+    endloop
+  endfacet
+  facet normal 0.000000 0.000000 1.000000
+    outer loop
+      vertex 26.0000 16.0000 35.0000
+      vertex 34.0000 16.0000 35.0000
+      vertex 34.0000 24.0000 35.0000
+    endloop
+  endfacet
+  facet normal 0.000000 0.000000 1.000000
+    outer loop
+      vertex 26.0000 16.0000 35.0000
+      vertex 34.0000 24.0000 35.0000
+      vertex 26.0000 24.0000 35.0000
+    endloop
+  endfacet
+  facet normal 0.000000 -1.000000 0.000000
+    outer loop
+      vertex 26.0000 16.0000 30.0000
+      vertex 34.0000 16.0000 30.0000
+      vertex 34.0000 16.0000 35.0000
+    endloop
+  endfacet
+  facet normal 0.000000 -1.000000 0.000000
+    outer loop
+      vertex 26.0000 16.0000 30.0000
+      vertex 34.0000 16.0000 35.0000
+      vertex 26.0000 16.0000 35.0000
+    endloop
+  endfacet
+  facet normal 0.000000 1.000000 0.000000
+    outer loop
+      vertex 34.0000 24.0000 30.0000
+      vertex 26.0000 24.0000 30.0000
+      vertex 26.0000 24.0000 35.0000
+    endloop
+  endfacet
+  facet normal 0.000000 1.000000 0.000000
+    outer loop
+      vertex 34.0000 24.0000 30.0000
+      vertex 26.0000 24.0000 35.0000
+      vertex 34.0000 24.0000 35.0000
+    endloop
+  endfacet
+  facet normal -1.000000 0.000000 0.000000
+    outer loop
+      vertex 26.0000 16.0000 30.0000
+      vertex 26.0000 16.0000 35.0000
+      vertex 26.0000 24.0000 35.0000
+    endloop
+  endfacet
+  facet normal -1.000000 0.000000 0.000000
+    outer loop
+      vertex 26.0000 16.0000 30.0000
+      vertex 26.0000 24.0000 35.0000
+      vertex 26.0000 24.0000 30.0000
+    endloop
+  endfacet
+  facet normal 1.000000 0.000000 0.000000
+    outer loop
+      vertex 34.0000 16.0000 30.0000
+      vertex 34.0000 24.0000 30.0000
+      vertex 34.0000 24.0000 35.0000
+    endloop
+  endfacet
+  facet normal 1.000000 0.000000 0.000000
+    outer loop
+      vertex 34.0000 16.0000 30.0000
+      vertex 34.0000 24.0000 35.0000
+      vertex 34.0000 16.0000 35.0000
+    endloop
+  endfacet
+endsolid BUTTON-001
