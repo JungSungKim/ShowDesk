@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /c/dev/ShowDesk pull)",
+      "Bash(git -C /c/dev/ShowDesk status)",
+      "Bash(npm --version ls /c/dev/ShowDesk/node_modules)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(jobs -l)",
+      "Bash(kill %1)",
+      "Bash(BGPID=$! sleep 12 cat /tmp/showdesk_dev.log)",
+      "Bash(kill %1 %2)",
+      "Read(//tmp/**)",
+      "Bash(git -C /c/dev/ShowDesk log --oneline -3)",
+      "Bash(git *)",
+      "Bash(node *)",
+      "Bash(echo \"PID: $!\")",
+      "Bash(wmux browser *)",
+      "Bash(npx playwright *)",
+      "Bash(pkill -f \"electron\")",
+      "Bash(pkill -f electron)",
+      "Bash(npm list *)",
+      "Bash(npm --version)",
+      "Read(//c/dev/ShowDesk/node_modules/**)",
+      "Read(//c/dev/ShowDesk/assets/samples_2//**)",
+      "Read(//c/dev/ShowDesk/assets/samples_2/**)",
+      "Bash(npm info *)",
+      "Read(//c/dev/ShowDesk/**)",
+      "Bash(pkill -f \"electron\" npm install occt-import-js)",
+      "Bash(npm uninstall *)"
+    ]
+  }
+}

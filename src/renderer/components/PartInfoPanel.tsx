@@ -5,6 +5,8 @@ interface PartInfoPanelProps {
   tree: BOMNode[]
   selectedPartNumber: string | null
   isAssigned: boolean
+  isDecimated?: boolean
+  originalTriangles?: number
 }
 
 function findNode(nodes: BOMNode[], partNumber: string): BOMNode | null {
@@ -27,7 +29,7 @@ function StatRow({ label, value, accent }: { label: string; value: string; accen
   )
 }
 
-function PartInfoPanel({ tree, selectedPartNumber, isAssigned }: PartInfoPanelProps): React.JSX.Element {
+function PartInfoPanel({ tree, selectedPartNumber, isAssigned, isDecimated, originalTriangles }: PartInfoPanelProps): React.JSX.Element {
   const node = selectedPartNumber ? findNode(tree, selectedPartNumber) : null
 
   if (!node) {
@@ -53,6 +55,11 @@ function PartInfoPanel({ tree, selectedPartNumber, isAssigned }: PartInfoPanelPr
         <span className="status-badge-text">{isAssigned ? 'STL Linked' : 'No STL'}</span>
         {node.children.length > 0 && (
           <span className="status-badge-sub">{node.children.length} sub-parts</span>
+        )}
+        {isDecimated && originalTriangles && (
+          <span className="status-badge-decimated" title={`원본 ${(originalTriangles / 10000).toFixed(0)}만 폴리곤 → 50만으로 단순화`}>
+            ▼ 단순화
+          </span>
         )}
       </div>
 

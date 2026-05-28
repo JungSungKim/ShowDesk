@@ -2,13 +2,14 @@ import React, { useEffect, useRef, useState } from 'react'
 import { SceneManager } from '@core/renderer/sceneManager'
 import type { ViewMode } from '@core/renderer/sceneManager'
 import { loadSTLFromBuffer } from '@core/loader/stlLoader'
-import type { AssignedPart, RenderMode, AnnotationPin } from '../store/useAppStore'
+import type { AssignedPart, RenderMode, AnnotationPin, Orientation } from '../store/useAppStore'
 
 interface Viewer3DProps {
   assignedParts: Record<string, AssignedPart>
   selectedPartNumber: string | null
   renderMode: RenderMode
   centerMesh?: boolean
+  globalOrientation?: Orientation
   onPartClick?: (partNumber: string | null) => void
   // 핀 모드
   pinMode?: boolean
@@ -31,6 +32,7 @@ function Viewer3D({
   selectedPartNumber,
   renderMode,
   centerMesh = false,
+  globalOrientation = { x: 0, y: 0, z: 0 },
   onPartClick,
   pinMode = false,
   selectedPinId = null,
@@ -79,10 +81,12 @@ function Viewer3D({
 
     const currentKeys = new Set(Object.keys(assignedParts))
 
-    for (const [partNumber, { buffer }] of Object.entries(assignedParts)) {
+    for (const [partNumber, { buffer, filePath }] of Object.entries(assignedParts)) {
       if (!loadedRef.current.has(partNumber)) {
         const { mesh } = loadSTLFromBuffer(buffer, partNumber, { center: centerMesh })
         manager.addNamedMesh(partNumber, mesh)
+        // 새 메시에 현재 전역 방향 즉시 적용
+        manager.setMeshRotation(partNumber, globalOrientation.x, globalOrientation.y, globalOrientation.z)
         loadedRef.current.add(partNumber)
       }
     }
@@ -95,7 +99,12 @@ function Viewer3D({
     }
 
     manager.setViewMode(viewMode, selectedPartNumber)
-  }, [assignedParts, centerMesh, viewMode, selectedPartNumber])
+  }, [assignedParts, centerMesh, viewMode, selectedPartNumber, globalOrientation])
+
+  // ── 전역 방향 변경 → 모든 메시 업데이트 ──────────────────────
+  useEffect(() => {
+    sceneRef.current?.setAllMeshesRotation(globalOrientation.x, globalOrientation.y, globalOrientation.z)
+  }, [globalOrientation])
 
   // ── 뷰 모드 변경 ───────────────────────────────────────────
   useEffect(() => {

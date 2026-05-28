@@ -1,0 +1,30 @@
+{
+  "version": "1.0",
+  "bomFilePath": "C:\\dev\\ShowDesk\\assets\\samples\\bom\\sample.csv",
+  "parts": [
+    {
+      "partNumber": "BODY-001",
+      "stlFilePath": "C:\\dev\\ShowDesk\\assets\\samples\\stl\\BODY-001.stl"
+    },
+    {
+      "partNumber": "BUTTON-001",
+      "stlFilePath": "C:\\dev\\ShowDesk\\assets\\samples\\stl\\BUTTON-001.stl"
+    },
+    {
+      "partNumber": "LID-001",
+      "stlFilePath": "C:\\dev\\ShowDesk\\assets\\samples\\stl\\LID-001.stl"
+    },
+    {
+      "partNumber": "PCB-001",
+      "stlFilePath": "C:\\dev\\ShowDesk\\assets\\samples\\stl\\PCB-001.stl"
+    },
+    {
+      "partNumber": "LED-001",
+      "stlFilePath": "C:\\dev\\ShowDesk\\assets\\samples\\stl\\LED-001.stl"
+    },
+    {
+      "partNumber": "SCREW-M3",
+      "stlFilePath": "C:\\dev\\ShowDesk\\assets\\samples\\stl\\SCREW-M3.stl"
+    }
+  ]
+}

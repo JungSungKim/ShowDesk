@@ -1,6 +1,5 @@
 import React from 'react'
-import { parseBOM } from '@core/bom/bomParser'
-import { xlsxToCsv } from '@core/bom/xlsxLoader'
+import { parseBOMFromFile } from '@core/bom/bomParser'
 import { deserializeProject } from '@core/bom/project'
 import { useAppStore } from '../store/useAppStore'
 import '../styles/landing.css'
@@ -21,8 +20,7 @@ function LandingScreen(): React.JSX.Element {
 
       // BOM 읽기
       const bomBuf = await window.api.readFile(project.bomFilePath)
-      const bomText = new TextDecoder().decode(bomBuf)
-      const { tree, warnings } = parseBOM(bomText)
+      const { tree, warnings } = await parseBOMFromFile(bomBuf, project.bomFilePath)
 
       enterBomFirst(tree, warnings, project.bomFilePath)
 
@@ -30,8 +28,8 @@ function LandingScreen(): React.JSX.Element {
       const store = useAppStore.getState()
       for (const { partNumber, stlFilePath } of project.parts) {
         try {
-          const stlBuf = await window.api.readFile(stlFilePath)
-          store.assignPart(partNumber, stlBuf, stlFilePath)
+          const { buffer, decimated, originalTriangles } = await window.api.loadSTL(stlFilePath)
+          store.assignPart(partNumber, buffer, stlFilePath, decimated, originalTriangles)
         } catch {
           // 파일이 없으면 미매핑 상태로 남김
         }
@@ -48,16 +46,13 @@ function LandingScreen(): React.JSX.Element {
 
   const handleOpenBOM = async (): Promise<void> => {
     const filePath = await window.api.openFileDialog([
-      { name: 'BOM Files', extensions: ['csv', 'xlsx'] }
+      { name: 'BOM Files', extensions: ['csv', 'xlsx', 'html', 'htm'] }
     ])
     if (!filePath) return
     setLoading(true)
     try {
       const buf = await window.api.readFile(filePath)
-      const text = filePath.toLowerCase().endsWith('.xlsx')
-        ? xlsxToCsv(buf)
-        : new TextDecoder().decode(buf)
-      const { tree, warnings } = parseBOM(text)
+      const { tree, warnings } = await parseBOMFromFile(buf, filePath)
       enterBomFirst(tree, warnings, filePath)
     } finally {
       setLoading(false)
@@ -66,13 +61,15 @@ function LandingScreen(): React.JSX.Element {
 
   const handleOpenSTL = async (): Promise<void> => {
     const filePath = await window.api.openFileDialog([
-      { name: 'STL Files', extensions: ['stl'] }
+      { name: '3D Model Files', extensions: ['stl', 'wrl', 'vrml', 'step', 'stp', 'igs', 'iges'] }
     ])
     if (!filePath) return
     setLoading(true)
     try {
-      const buf = await window.api.readFile(filePath)
-      enterStlOnly(buf, filePath)
+      const { buffer, decimated, originalTriangles } = await window.api.loadSTL(filePath)
+      enterStlOnly(buffer, filePath, decimated, originalTriangles)
+    } catch (e) {
+      alert(`STL 파일을 열 수 없습니다.\n${(e as Error).message}`)
     } finally {
       setLoading(false)
     }
@@ -93,7 +90,7 @@ function LandingScreen(): React.JSX.Element {
         <button className="landing-card primary" onClick={handleOpenBOM}>
           <span className="card-icon">📋</span>
           <span className="card-title">BOM으로 시작</span>
-          <span className="card-desc">CSV / Excel 불러온 후 파트별 STL 지정</span>
+          <span className="card-desc">CSV / Excel / HTML 불러온 후 파트별 STL 지정</span>
         </button>
 
         <button className="landing-card" onClick={handleOpenSTL}>

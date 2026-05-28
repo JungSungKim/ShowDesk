@@ -4,10 +4,10 @@ import PartTree from './components/PartTree'
 import PartInfoPanel from './components/PartInfoPanel'
 import LandingScreen from './components/LandingScreen'
 import PinEditor from './components/PinEditor'
+import OrientationPanel from './components/OrientationPanel'
 import { useAppStore } from './store/useAppStore'
 import type { AnnotationPin } from './store/useAppStore'
-import { parseBOM } from '@core/bom/bomParser'
-import { xlsxToCsv } from '@core/bom/xlsxLoader'
+import { parseBOMFromFile } from '@core/bom/bomParser'
 import { serializeProject } from '@core/bom/project'
 import './styles/app.css'
 
@@ -23,14 +23,15 @@ function App(): React.JSX.Element {
     bomTree, bomWarnings, bomFilePath,
     assignedParts, stlOnlyFileName,
     selectedPartNumber, projectPath, isDirty, isLoading,
-    pins,
+    pins, globalOrientation,
     enterBomFirst, enterStlOnly, assignPart, selectPart,
     setRenderMode, setProjectPath, markClean, setLoading, reset,
-    addPin, updatePin, removePin,
+    addPin, updatePin, removePin, setGlobalOrientation,
   } = useAppStore()
 
   const [pinMode, setPinMode] = useState(false)
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null)
+  const [showOrient, setShowOrient] = useState(false)
 
   const assignedPartNumbers = useMemo(
     () => new Set(Object.keys(assignedParts)),
@@ -41,10 +42,14 @@ function App(): React.JSX.Element {
 
   // ── 파트 STL 지정 ──────────────────────────────────────────
   const handleAssignPart = async (partNumber: string): Promise<void> => {
-    const filePath = await window.api.openFileDialog([{ name: 'STL Files', extensions: ['stl'] }])
+    const filePath = await window.api.openFileDialog([{ name: '3D Model Files', extensions: ['stl', 'wrl', 'vrml', 'step', 'stp', 'igs', 'iges'] }])
     if (!filePath) return
-    const buffer = await window.api.readFile(filePath)
-    assignPart(partNumber, buffer, filePath)
+    try {
+      const { buffer, decimated, originalTriangles } = await window.api.loadSTL(filePath)
+      assignPart(partNumber, buffer, filePath, decimated, originalTriangles)
+    } catch (e) {
+      alert(`STL 파일을 열 수 없습니다.\n${(e as Error).message}`)
+    }
   }
 
   // ── 프로젝트 저장 ──────────────────────────────────────────
@@ -74,16 +79,13 @@ function App(): React.JSX.Element {
   // ── BOM 재로드 ─────────────────────────────────────────────
   const handleReloadBOM = async (): Promise<void> => {
     const filePath = await window.api.openFileDialog([
-      { name: 'BOM Files', extensions: ['csv', 'xlsx'] }
+      { name: 'BOM Files', extensions: ['csv', 'xlsx', 'html', 'htm'] }
     ])
     if (!filePath) return
     setLoading(true)
     try {
       const buf = await window.api.readFile(filePath)
-      const text = filePath.toLowerCase().endsWith('.xlsx')
-        ? xlsxToCsv(buf)
-        : new TextDecoder().decode(buf)
-      const { tree, warnings } = parseBOM(text)
+      const { tree, warnings } = await parseBOMFromFile(buf, filePath)
       enterBomFirst(tree, warnings, filePath)
     } finally {
       setLoading(false)
@@ -110,8 +112,8 @@ function App(): React.JSX.Element {
       for (const node of flatten(bomTree)) {
         const fp = stlMap.get(node.partNumber.toLowerCase())
         if (fp) {
-          const buf = await window.api.readFile(fp)
-          assignPart(node.partNumber, buf, fp)
+          const { buffer, decimated, originalTriangles } = await window.api.loadSTL(fp)
+          assignPart(node.partNumber, buffer, fp, decimated, originalTriangles)
           matched++
         }
       }
@@ -124,12 +126,12 @@ function App(): React.JSX.Element {
 
   // ── STL-only: 새 파일 열기 ─────────────────────────────────
   const handleReopenSTL = async (): Promise<void> => {
-    const filePath = await window.api.openFileDialog([{ name: 'STL Files', extensions: ['stl'] }])
+    const filePath = await window.api.openFileDialog([{ name: '3D Model Files', extensions: ['stl', 'wrl', 'vrml', 'step', 'stp', 'igs', 'iges'] }])
     if (!filePath) return
     setLoading(true)
     try {
-      const buf = await window.api.readFile(filePath)
-      enterStlOnly(buf, filePath)
+      const { buffer, decimated, originalTriangles } = await window.api.loadSTL(filePath)
+      enterStlOnly(buffer, filePath, decimated, originalTriangles)
     } finally {
       setLoading(false)
     }
@@ -182,6 +184,15 @@ function App(): React.JSX.Element {
 
       <div className="spacer" />
 
+      {/* 방향 수정 */}
+      <button
+        className={`btn-secondary ${showOrient ? 'active' : ''}`}
+        onClick={() => setShowOrient(v => !v)}
+        title="모델 방향(좌표계) 수정"
+      >
+        ⟳ 방향
+      </button>
+
       {/* 핀 모드 토글 */}
       <button
         className={`btn-pin-mode ${pinMode ? 'active' : ''}`}
@@ -226,12 +237,21 @@ function App(): React.JSX.Element {
             selectedPartNumber={null}
             renderMode={renderMode}
             centerMesh={true}
+            globalOrientation={globalOrientation}
             pinMode={pinMode}
             selectedPinId={selectedPinId}
             pins={pins}
             onPinAdd={handlePinAdd}
             onPinClick={handlePinClick}
           />
+          {showOrient && (
+            <OrientationPanel
+              orientation={globalOrientation}
+              meshCount={Object.keys(assignedParts).length}
+              onChange={setGlobalOrientation}
+              onClose={() => setShowOrient(false)}
+            />
+          )}
           {selectedPin && (
             <PinEditor
               pin={selectedPin}
@@ -261,12 +281,21 @@ function App(): React.JSX.Element {
           selectedPartNumber={selectedPartNumber}
           renderMode={renderMode}
           onPartClick={selectPart}
+          globalOrientation={globalOrientation}
           pinMode={pinMode}
           selectedPinId={selectedPinId}
           pins={pins}
           onPinAdd={handlePinAdd}
           onPinClick={handlePinClick}
         />
+        {showOrient && (
+          <OrientationPanel
+            orientation={globalOrientation}
+            meshCount={Object.keys(assignedParts).length}
+            onChange={setGlobalOrientation}
+            onClose={() => setShowOrient(false)}
+          />
+        )}
 
         {/* 핀 에디터 오버레이 */}
         {selectedPin && (
@@ -304,6 +333,8 @@ function App(): React.JSX.Element {
           tree={bomTree}
           selectedPartNumber={selectedPartNumber}
           isAssigned={selectedPartNumber ? !!assignedParts[selectedPartNumber] : false}
+          isDecimated={selectedPartNumber ? !!assignedParts[selectedPartNumber]?.decimated : false}
+          originalTriangles={selectedPartNumber ? (assignedParts[selectedPartNumber]?.originalTriangles ?? 0) : 0}
         />
 
       </div>

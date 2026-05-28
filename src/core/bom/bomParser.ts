@@ -1,4 +1,25 @@
 import type { BOMRow, BOMNode, BOMParseResult } from './types'
+import { parseHtmlBOM } from './htmlBomParser'
+import { xlsxToCsv } from './xlsxLoader'
+
+/**
+ * 파일 경로의 확장자를 보고 적절한 파서로 BOM을 파싱한다.
+ * CSV / XLSX / HTML(.html, .htm) 지원.
+ */
+export async function parseBOMFromFile(
+  buffer: ArrayBuffer,
+  filePath: string
+): Promise<BOMParseResult> {
+  const lower = filePath.toLowerCase()
+  if (lower.endsWith('.html') || lower.endsWith('.htm')) {
+    const html = new TextDecoder('utf-8', { fatal: false }).decode(buffer)
+    return parseHtmlBOM(html)
+  }
+  const text = lower.endsWith('.xlsx')
+    ? xlsxToCsv(buffer)
+    : new TextDecoder().decode(buffer)
+  return parseBOM(text)
+}
 
 // ── CSV 파싱 ──────────────────────────────────────────────────
 

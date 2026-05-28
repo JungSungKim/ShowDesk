@@ -129,6 +129,27 @@ export class SceneManager {
     this.applyMeshStates()
   }
 
+  // ── 방향(좌표계) 보정 ─────────────────────────────────────────
+
+  setMeshRotation(name: string, rx: number, ry: number, rz: number): void {
+    const mesh = this.meshes.get(name)
+    if (!mesh) return
+    const toRad = (d: number) => (d * Math.PI) / 180
+    mesh.rotation.set(toRad(rx), toRad(ry), toRad(rz))
+    // edge lines의 transform도 동기화
+    const pair = this.edgeLines.get(name)
+    if (pair) {
+      pair.feature.quaternion.copy(mesh.quaternion)
+      pair.grid.quaternion.copy(mesh.quaternion)
+    }
+    this.updateStage()
+    this.fitCamera()
+  }
+
+  setAllMeshesRotation(rx: number, ry: number, rz: number): void {
+    for (const name of this.meshes.keys()) this.setMeshRotation(name, rx, ry, rz)
+  }
+
   // ── 자동 회전 ──────────────────────────────────────────────
 
   setAutoRotate(dir: 'cw' | 'ccw' | 'off'): void {
