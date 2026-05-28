@@ -81,6 +81,21 @@ export class SceneManager {
 
     mesh.name = name
     mesh.castShadow = true
+
+    // 기존 씬과 겹치면 옆으로 자동 배치 (독립 part 원점 충돌 방지)
+    if (this.meshes.size > 0) {
+      const newBox = new THREE.Box3().setFromObject(mesh)
+      const sceneBox = new THREE.Box3()
+      for (const m of this.meshes.values()) sceneBox.expandByObject(m)
+      if (newBox.intersectsBox(sceneBox)) {
+        const sceneSize = sceneBox.getSize(new THREE.Vector3())
+        const newSize   = newBox.getSize(new THREE.Vector3())
+        const newCenter = newBox.getCenter(new THREE.Vector3())
+        const gap = Math.max(sceneSize.x, newSize.x) * 0.15
+        mesh.position.x += sceneBox.max.x + newSize.x / 2 - newCenter.x + gap
+      }
+    }
+
     this.meshes.set(name, mesh)
     this.scene.add(mesh)
     this.fitCamera()
@@ -392,13 +407,14 @@ export class SceneManager {
     const size   = box.getSize(new THREE.Vector3())
     const maxDim = Math.max(size.x, size.y, size.z)
 
-    const floorY = box.min.y - maxDim * 0.12
+    const floorY = box.min.y - maxDim * 0.36   // 모델 띄우는 높이 3배
     if (this.stageFloor) { this.stageFloor.position.set(center.x, floorY, center.z); this.stageFloor.visible = true }
     if (this.stageWall)  { this.stageWall.position.set(center.x, center.y, center.z - maxDim * 2.5); this.stageWall.visible = true }
 
     if (this.spot) {
       const h = maxDim * 2.2
-      this.spot.position.set(center.x + maxDim * 0.15, center.y + h, center.z + h)
+      // 조명 앙각 30° → 수평 Z 거리 = h / tan(30°) = h * √3 ≈ h * 1.732
+      this.spot.position.set(center.x + maxDim * 0.15, center.y + h, center.z + h * 1.732)
       this.spot.target.position.copy(center)
       this.spot.target.updateMatrixWorld()
       const distToTarget = this.spot.position.distanceTo(center)
