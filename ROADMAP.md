@@ -39,6 +39,7 @@
 - [x] 파트 트리 검색 필터 (실시간 하이라이트)
 - [x] 어노테이션 핀 삽입 및 저장 (CSS2DRenderer 레이블, .showdesk 직렬화)
 - [x] 오브젝트 자동 회전 (시계/반시계/정지)
+- [x] STEP/IGES CAD 파일 로드 (occt-import-js, CATIA 다중 파트 자동 배치)
 
 ### 미완료
 - [ ] 수동 BOM-3D 매핑 UI (드래그 또는 우클릭)

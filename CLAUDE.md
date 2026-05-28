@@ -17,6 +17,10 @@
 
 > **ShowDesk**: STL 3D 파일과 BOM을 연동하여, CAD 전문가 없이도 회의 자리에서 3D 모델을 직관적으로 탐색하고 쇼잉할 수 있는 PC 데스크탑 툴.
 
+### 지원 파일 형식
+- **3D**: STL (ASCII/Binary), WRL/VRML2, STEP (.step/.stp), IGES (.igs/.iges)
+- **BOM**: CSV, Excel (.xlsx), HTML
+
 ### 핵심 사용 흐름
 ```
 STL 파일 로드
@@ -56,9 +60,11 @@ ShowDesk/
 │
 ├── src/
 │   ├── main/               ← Electron 메인 프로세스
+│   │   ├── index.ts        ← IPC 핸들러 (stl:load, dialog:*, fs:*)
+│   │   └── cadLoader.ts    ← STEP/IGES → binary STL 변환 (occt-import-js)
 │   ├── preload/            ← Electron preload 스크립트
 │   ├── renderer/           ← React UI
-│   │   ├── components/     ← LandingScreen, Viewer3D, PartTree, PartInfoPanel, PinEditor
+│   │   ├── components/     ← LandingScreen, Viewer3D, PartTree, PartInfoPanel, PinEditor, OrientationPanel
 │   │   ├── pages/          ← (예약 — 현재 미사용)
 │   │   ├── store/          ← useAppStore.ts (Zustand)
 │   │   └── hooks/          ← (예약 — 현재 미사용)
@@ -118,6 +124,7 @@ npm test
 | `fs:readFile` | 파일 읽기 | `ArrayBuffer` |
 | `fs:writeFile` | 파일 쓰기 (`string \| ArrayBuffer`) | `void` |
 | `fs:readDir` | 폴더 목록 | `{ name, fullPath }[]` |
+| `stl:load` | 3D 파일 로드 (STL/WRL/STEP/IGES, 대형 자동 다운샘플) | `STLLoadResult` |
 
 `src/preload/index.ts`가 `window.api.*`로 노출. renderer에서 `ipcRenderer` 직접 사용 금지.
 
@@ -175,6 +182,14 @@ npm test
 - 씬 내 객체 추적은 `useRef<Set<string>>(new Set())`으로 관리 — React state가 아님
 - 예: `loadedRef`(메시), `pinnedIdsRef`(핀) — effect에서 diff 후 add/remove만 수행
 - 매 렌더마다 전체 clear/re-add 금지 (깜빡임 + 성능 저하)
+
+### STEP/IGES 로딩 (cadLoader.ts)
+- `occt-import-js` 사용 — `opencascade.js`는 ESM/CJS 혼합 + Emscripten 바인딩 문제로 사용 불가
+- WASM 경로는 `locateFile` 콜백으로 직접 지정 필요 (`require.resolve`로 패키지 내부 경로 확보)
+- CATIA 독립 part export 시 각 파일이 자체 원점(0,0,0) 기준 → 씬에서 겹침 발생
+  - 해결: `SceneManager.addNamedMesh`에서 bounding box 겹침 감지 시 X축 자동 오프셋
+  - 어셈블리 export(파트 간 상대 좌표 유지) → 겹침 없으므로 오프셋 미적용
+  - `meshesToSTLBuffer`에서 centroid 빼기 금지 — CATIA 원좌표 유지해야 SceneManager 오프셋 로직이 동작
 
 ---
 

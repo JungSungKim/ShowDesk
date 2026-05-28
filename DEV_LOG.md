@@ -4,10 +4,36 @@
 
 | 항목 | 내용 |
 |------|------|
-| 최종 갱신 | 2026-05-27 |
+| 최종 갱신 | 2026-05-28 |
 | 브랜치 | master |
-| 최신 커밋 | 5ffa6fa |
+| 최신 커밋 | 1eaeb06 |
 | 미커밋 변경 | 없음 |
+
+---
+
+## 2026-05-28
+
+### 완료 작업
+
+**STEP/IGES CAD 파일 지원 (`src/main/cadLoader.ts`)**
+- `occt-import-js` 기반 STEP/IGES → binary STL 변환 구현
+- `opencascade.js` 시도 후 ESM/CJS 혼합 + Emscripten 바인딩 문제로 포기
+- WASM 경로 `locateFile` 콜백으로 직접 지정 (런타임 require.resolve 사용)
+- 파일 선택 다이얼로그에 `.step/.stp/.igs/.iges` 확장자 추가 (LandingScreen, App.tsx)
+
+**조명 및 스테이지 조정 (`src/core/renderer/sceneManager.ts`)**
+- 스팟 조명 앙각 45° → 30° (Z 오프셋 `h` → `h * 1.732`)
+- 모델 부유 높이 `maxDim * 0.12` → `maxDim * 0.36` (3배)
+
+**다중 파일 겹침 자동 배치 (`src/core/renderer/sceneManager.ts`)**
+- CATIA 독립 part export 시 두 파일이 동일 원점(0,0,0)에 겹쳐 한 파일이 안 보이는 버그
+- `SceneManager.addNamedMesh`에서 bounding box 겹침 감지 시 X축 자동 오프셋
+- 어셈블리 export(상대 좌표 유지)는 겹침 없으므로 오프셋 미적용
+
+**CLAUDE.md 개선**
+- 지원 파일 형식 명시, `cadLoader.ts` 디렉토리 구조 추가
+- `stl:load` IPC 채널, STEP/IGES Gotcha 섹션 추가
+- `meshesToSTLBuffer` centroid 빼기 금지 규칙 문서화
 
 ### 완료된 작업
 
@@ -35,6 +61,7 @@
 - 파트 트리 검색 필터 (실시간 하이라이트) ✅
 - 어노테이션 핀 (CSS2DRenderer 레이블, .showdesk 직렬화) ✅
 - 오브젝트 자동 회전 (시계/반시계/정지 버튼) ✅
+- STEP/IGES CAD 파일 로드 지원 (occt-import-js) ✅
 
 ### 다음 추천 작업
 1. **Exploded View** — 파트별 방향 벡터로 분해 애니메이션
